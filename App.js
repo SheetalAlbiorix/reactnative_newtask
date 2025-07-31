@@ -5,6 +5,7 @@ import "./global.css";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { AuthProvider } from "@/utils/AuthContext";
 import { useCustomFonts } from "@/utils/fonts";
+import { AppProvider } from "@/utils/AppContext";
 
 export default function App() {
   const fontsLoaded = useCustomFonts();
@@ -12,12 +13,14 @@ export default function App() {
     return null;
   }
   return (
-    <AuthProvider>
-      <SafeAreaProvider>
-        <ThemeProvider>
-          <RootNavigator />
-        </ThemeProvider>
-      </SafeAreaProvider>
-    </AuthProvider>
+    <AppProvider>
+      <AuthProvider>
+        <SafeAreaProvider>
+          <ThemeProvider>
+            <RootNavigator />
+          </ThemeProvider>
+        </SafeAreaProvider>
+      </AuthProvider>
+    </AppProvider>
   );
 }

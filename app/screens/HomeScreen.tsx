@@ -3,11 +3,13 @@ import React from "react";
 import { useTheme } from "@/utils/ThemeContext";
 import Button from "@/components/Button";
 import Screen from "@/components/Screen";
-import { useAuth } from "@/utils/AuthContext";
+import { LoginType, useAuth } from "@/utils/AuthContext";
+import UseLogin from "@/hooks/useLogin";
 
 const HomeScreen = () => {
-  const { theme, toggleTheme, isDarkMode } = useTheme();
-  const { logout } = useAuth();
+  const { theme } = useTheme();
+  const { logout, authState } = useAuth();
+  const { logoutFromGoogle } = UseLogin();
 
   return (
     <Screen useSafeArea>
@@ -25,7 +27,16 @@ const HomeScreen = () => {
           </Text>{" "}
           to apply your changes
         </Text>
-        <Button variant="primary" style={styles.button} onPress={logout}>
+        <Button
+          variant="primary"
+          style={styles.button}
+          onPress={async () => {
+            if (authState.type === LoginType.google) {
+              await logoutFromGoogle();
+            }
+            logout();
+          }}
+        >
           Logout
         </Button>
       </View>
