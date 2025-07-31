@@ -39,3 +39,6 @@ yarn-error.*
 # native folders 
 android/
 ios/
+
+# environment files
+.env
