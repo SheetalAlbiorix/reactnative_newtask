@@ -3,8 +3,11 @@
     "baseUrl": ".",
     "jsx":"react-native",
     "paths": {
-      "@/*": ["app/*"]
-    }
+      "@/*": [
+        "app/*"
+      ]
+    },
+    "jsx": "react-native",
   },
   "extends": "expo/tsconfig.base"
 }
