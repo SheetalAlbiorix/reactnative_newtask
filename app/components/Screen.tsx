@@ -54,8 +54,7 @@ const Screen: React.FC<ScreenProps> = ({
   const bgColor = backgroundColor || theme.background;
 
   // Determine status bar style
-  const barStyle =
-    statusBarStyle || (isDarkMode ? "light-content" : "dark-content");
+  const barStyle = statusBarStyle || "light-content";
 
   // Determine if we should show refresh control
   const showRefreshControl = scroll && onRefresh !== undefined;

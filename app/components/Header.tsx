@@ -73,7 +73,7 @@ const Header: React.FC<HeaderProps> = ({
   return (
     <>
       <StatusBar
-        barStyle={isDarkMode ? "light-content" : "dark-content"}
+        barStyle={"light-content"}
         backgroundColor={transparent ? "transparent" : theme.background}
         translucent={transparent}
       />

@@ -25,9 +25,6 @@ const HomeScreen = () => {
           </Text>{" "}
           to apply your changes
         </Text>
-        <Button variant="primary" style={styles.button} onPress={toggleTheme}>
-          {isDarkMode ? "Switch to Light Mode" : "Switch to Dark Mode"}
-        </Button>
         <Button variant="primary" style={styles.button} onPress={logout}>
           Logout
         </Button>
