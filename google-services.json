@@ -14,14 +14,6 @@
       },
       "oauth_client": [
         {
-          "client_id": "1045753182166-0r3smomqfiffm31rorbg049d70ot3h1t.apps.googleusercontent.com",
-          "client_type": 1,
-          "android_info": {
-            "package_name": "com.tryperdiem.code",
-            "certificate_hash": "1d22f5cb7ad67f2af6d44b1ec6c58333cba508f2"
-          }
-        },
-        {
           "client_id": "1045753182166-msotglqq3embikhj7h6f1iujk05qbbe2.apps.googleusercontent.com",
           "client_type": 1,
           "android_info": {

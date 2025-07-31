@@ -17,7 +17,12 @@ interface AuthVerifyResponse {
 export const authenticationUser = async (
   request: AuthRequest
 ): Promise<AuthResponse> => {
-  return apiClient.post<AuthResponse>(endpoints.auth, request);
+  return apiClient
+    .post<AuthResponse>(endpoints.auth, request)
+    .then((response) => {
+      apiClient.setAuthToken(response.token);
+      return response;
+    });
 };
 
 export const verifyAuthentication = async ({
