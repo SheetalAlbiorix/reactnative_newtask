@@ -6,7 +6,7 @@ const config: ExpoConfig = {
   version: "1.0.0",
   icon: "./assets/branding/icon.png",
   newArchEnabled: true,
-  userInterfaceStyle: "automatic",
+  userInterfaceStyle: "light",
   android: {
     package: "com.tryperdiem.code",
     versionCode: 1,
@@ -17,10 +17,16 @@ const config: ExpoConfig = {
     bundleIdentifier: "com.tryperdiem.code",
     buildNumber: "1",
     googleServicesFile: "./GoogleService-Info.plist",
+    infoPlist: {
+      NSAppTransportSecurity: {
+        NSAllowsArbitraryLoads: true,
+      },
+    },
   },
   web: {
     bundler: "metro",
   },
+
   plugins: [
     "expo-font",
     [

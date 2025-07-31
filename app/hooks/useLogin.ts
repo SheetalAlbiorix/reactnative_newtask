@@ -1,16 +1,27 @@
+import {
+  authenticationUser,
+  AuthRequest,
+  AuthResponse,
+} from "@/network/api/requests/auth";
+import { useAuth } from "@/utils/AuthContext";
 import { isValidEmail, isValidPassword } from "@/utils/Helper";
 import { GoogleSignin } from "@react-native-google-signin/google-signin";
+import {
+  NavigationProp,
+  ParamListBase,
+  useNavigation,
+} from "@react-navigation/native";
 import React from "react";
 import { Alert } from "react-native";
 
-const webClientId =
-  "1045753182166-bnp2oo73jodnqfdo85utjbspq2h5931p.apps.googleusercontent.com";
-
 const UseLogin = () => {
+  const { login } = useAuth();
+  const navigation = useNavigation<NavigationProp<ParamListBase>>();
+
   React.useEffect(
     () =>
       GoogleSignin.configure({
-        webClientId: webClientId,
+        webClientId: process.env.GOOGLE_LOGIN_CLIENT_ID || "",
         scopes: ["profile", "email"],
         offlineAccess: false,
       }),
@@ -50,7 +61,27 @@ const UseLogin = () => {
       Alert.alert("Invalid Password");
       return;
     }
+
+    const request: AuthRequest = {
+      email: email,
+      password: password,
+    };
+
+    authenticationUser(request)
+      .then((response: AuthResponse) => {
+        console.error("Login response:", response);
+        if (response.token && response.token.length > 0) {
+          login(response.token);
+          navigation.navigate("Home");
+        } else {
+          Alert.alert("Login failed", "Unknown error");
+        }
+      })
+      .catch((error) => {
+        Alert.alert("Login error", error.message || "An error occurred");
+      });
   };
+
   return {
     loginWithGoogle,
     loginWithEmail,

@@ -13,8 +13,8 @@ import { isEmpty } from "@/utils/Helper";
 import UseLogin from "@/hooks/useLogin";
 
 const LoginScreen = () => {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  const [email, setEmail] = useState("user@tryperdiem.com");
+  const [password, setPassword] = useState("password");
   const [showPassword, setShowPassword] = useState(false);
   const { loginWithGoogle, loginWithEmail } = UseLogin();
 
@@ -91,6 +91,7 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: "center",
     padding: 16,
+    backgroundColor: "#fff",
   },
   title: {
     fontSize: 24,

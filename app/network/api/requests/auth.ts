@@ -1,12 +1,12 @@
 import { apiClient } from "../apiClient";
 import endpoints from "../endpoints";
 
-interface AuthRequest {
+export interface AuthRequest {
   email: string;
   password: string;
 }
 
-interface AuthResponse {
+export interface AuthResponse {
   token: string;
 }
 
