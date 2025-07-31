@@ -147,7 +147,6 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     borderColor: "#DB4437",
-    height: 48,
   },
   googleButtonText: {
     color: "#DB4437",
