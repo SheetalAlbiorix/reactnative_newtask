@@ -11,6 +11,8 @@ import Screen from "@/components/Screen";
 import { Ionicons } from "@expo/vector-icons";
 import { isEmpty } from "@/utils/Helper";
 import UseLogin from "@/hooks/useLogin";
+import Strings from "@/utils/Strings";
+import Color from "@/utils/Color";
 
 const LoginScreen = () => {
   const [email, setEmail] = useState("user@tryperdiem.com");
@@ -50,7 +52,7 @@ const LoginScreen = () => {
             <Ionicons
               name={showPassword ? "eye-off" : "eye"}
               size={20}
-              color="#888"
+              color={Color.gray}
             />
           </TouchableOpacity>
         </View>
@@ -62,13 +64,13 @@ const LoginScreen = () => {
           style={styles.button}
           disabled={isEmpty(email) || isEmpty(password)}
         >
-          Login
+          {Strings.login}
         </Button>
 
         {/* Separator */}
         <View style={styles.separatorContainer}>
           <View style={styles.separatorLine} />
-          <Text style={styles.separatorText}>OR</Text>
+          <Text style={styles.separatorText}>{Strings.or}</Text>
           <View style={styles.separatorLine} />
         </View>
 
@@ -78,8 +80,11 @@ const LoginScreen = () => {
           onPress={() => loginWithGoogle()}
           style={styles.googleButton}
         >
-          <Ionicons name="logo-google" size={20} color="#DB4437" />
-          <Text style={styles.googleButtonText}> Login with Google</Text>
+          <Ionicons name="logo-google" size={20} color={Color.red} />
+          <Text style={styles.googleButtonText}>
+            {" "}
+            {Strings.loginWithGoogle}
+          </Text>
         </Button>
       </View>
     </Screen>
@@ -91,7 +96,7 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: "center",
     padding: 16,
-    backgroundColor: "#fff",
+    backgroundColor: Color.white,
   },
   title: {
     fontSize: 24,
@@ -102,7 +107,7 @@ const styles = StyleSheet.create({
   input: {
     height: 48,
     borderWidth: 1,
-    borderColor: "#ccc",
+    borderColor: Color.lightGrey,
     borderRadius: 8,
     paddingHorizontal: 12,
     marginBottom: 12,
@@ -111,7 +116,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     borderWidth: 1,
-    borderColor: "#ccc",
+    borderColor: Color.lightGrey,
     borderRadius: 8,
     paddingHorizontal: 12,
     marginBottom: 16,
@@ -125,7 +130,6 @@ const styles = StyleSheet.create({
   },
   button: {
     marginTop: 8,
-    height: 48,
   },
   separatorContainer: {
     flexDirection: "row",
@@ -135,21 +139,21 @@ const styles = StyleSheet.create({
   separatorLine: {
     flex: 1,
     height: 1,
-    backgroundColor: "#ccc",
+    backgroundColor: Color.lightGrey,
   },
   separatorText: {
     marginHorizontal: 12,
-    color: "#888",
+    color: Color.gray,
     fontSize: 14,
   },
   googleButton: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    borderColor: "#DB4437",
+    borderColor: Color.red,
   },
   googleButtonText: {
-    color: "#DB4437",
+    color: Color.red,
     fontSize: 16,
     fontWeight: "500",
   },
