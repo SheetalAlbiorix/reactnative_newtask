@@ -3,8 +3,10 @@ import {
   AuthRequest,
   AuthResponse,
 } from "@/network/api/requests/auth";
-import { useAuth } from "@/utils/AuthContext";
+import { useApp } from "@/utils/AppContext";
+import { LoginType, useAuth } from "@/utils/AuthContext";
 import { isValidEmail, isValidPassword } from "@/utils/Helper";
+import Strings from "@/utils/Strings";
 import { GoogleSignin } from "@react-native-google-signin/google-signin";
 import {
   NavigationProp,
@@ -16,6 +18,7 @@ import { Alert } from "react-native";
 
 const UseLogin = () => {
   const { login } = useAuth();
+  const { setIsLoading } = useApp();
   const navigation = useNavigation<NavigationProp<ParamListBase>>();
 
   React.useEffect(
@@ -35,10 +38,11 @@ const UseLogin = () => {
     try {
       await GoogleSignin.hasPlayServices();
       const userDetails = await GoogleSignin.signIn();
-      const { idToken } = await GoogleSignin.getTokens();
+      const { idToken, accessToken } = await GoogleSignin.getTokens();
 
       if (userDetails && idToken) {
-        console.log("id token:", idToken);
+        login(idToken, LoginType.google);
+        navigation.navigate("Home");
       }
     } catch (error) {
       console.log("some other error happened", error);
@@ -53,12 +57,12 @@ const UseLogin = () => {
    */
   const loginWithEmail = (email: string, password: string) => {
     if (!isValidEmail(email)) {
-      Alert.alert("Invalid Email");
+      Alert.alert(Strings.invalidEmail);
       return;
     }
 
     if (!isValidPassword(password)) {
-      Alert.alert("Invalid Password");
+      Alert.alert(Strings.invalidPassword);
       return;
     }
 
@@ -67,24 +71,36 @@ const UseLogin = () => {
       password: password,
     };
 
+    setIsLoading(true);
     authenticationUser(request)
       .then((response: AuthResponse) => {
-        console.error("Login response:", response);
+        setIsLoading();
         if (response.token && response.token.length > 0) {
           login(response.token);
           navigation.navigate("Home");
         } else {
-          Alert.alert("Login failed", "Unknown error");
+          Alert.alert(Strings.loginFailed, Strings.unknownError);
         }
       })
       .catch((error) => {
-        Alert.alert("Login error", error.message || "An error occurred");
+        setIsLoading();
+        Alert.alert(Strings.loginError, error.message || Strings.genericError);
       });
+  };
+
+  const logoutFromGoogle = async () => {
+    try {
+      await GoogleSignin.signOut();
+      console.log("Logged out from Google");
+    } catch (error) {
+      console.error("Error logging out from Google:", error);
+    }
   };
 
   return {
     loginWithGoogle,
     loginWithEmail,
+    logoutFromGoogle,
   };
 };
 
