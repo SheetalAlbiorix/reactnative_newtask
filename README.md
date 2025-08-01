@@ -40,26 +40,20 @@ This application follows a modular architecture pattern with:
   - Notification system
   - Safe area handling
 
-## 📋 Prerequisites
-
-- Node.js (v18 or higher)
-- npm or yarn
-- Expo CLI
-- iOS Simulator (for iOS development)
-- Android Studio/Emulator (for Android development)
-- Xcode (for iOS builds)
 
 ## 🛠️ Setup Instructions
 
 ### 1. Clone the Repository
 ```bash
-git clone <repository-url>
-cd ready-to-go-expo
+git clone https://github.com/Hardik120589/store-management.git
+cd store-management
 ```
 
 ### 2. Install Dependencies
 ```bash
 npm install
+# generate native folders
+npm run prebuild
 ```
 
 ### 3. Environment Configuration
@@ -68,41 +62,21 @@ Create environment variables for Google Sign-In:
 - Configure the `GOOGLE_LOGIN_CLIENT_ID` environment variable
 - Update the `google-services.json` (Android) and `GoogleService-Info.plist` (iOS) files
 
-### 4. iOS Setup (Required for iOS builds)
-```bash
-cd ios
-pod install
-cd ..
-```
 
-### 5. Development Server
+### 4. Development Server
 ```bash
 npm start
-# or
-npx expo start --dev-client
 ```
 
-### 6. Platform-specific Commands
+### 5. Platform-specific Commands
 ```bash
 # Run on iOS
 npm run ios
-# or
-npx expo run:ios
 
 # Run on Android
 npm run android
-# or
-npx expo run:android
 
-# Run on Web
-npm run web
 ```
-
-## 🏃‍♂️ Running the Application
-
-1. **Development Mode**: Use `npm start` to start the Expo development server
-2. **Device Testing**: Scan the QR code with Expo Go app on your device
-3. **Simulator/Emulator**: Use platform-specific commands to run on simulators
 
 ## 📁 Project Structure
 
@@ -128,33 +102,13 @@ app/
 
 ## 🔧 Key Technologies
 
-- **React Native 0.79.4**: Core framework
-- **Expo SDK 53**: Development platform
+- **React Native**
+- **Expo SDK**
 - **TypeScript**: Type safety
-- **React Navigation 7**: Navigation
-- **NativeWind 4**: Styling with Tailwind CSS
-- **React Native MMKV**: Fast, secure storage
-- **Google Sign-In**: OAuth authentication
-- **React Native Reanimated**: Smooth animations
-- **Expo Notifications**: Push notifications
-
-## 🎯 Assumptions
-
-1. **Authentication**: The app assumes users will primarily authenticate via email/password or Google Sign-In
-2. **Network**: Requires internet connectivity for authentication and store management features
-3. **Platform Support**: Optimized for iOS and Android (web support available but limited)
-4. **Storage**: Uses MMKV for secure, persistent storage on device
-5. **Notifications**: Configured for push notifications with sound and custom icons
-6. **Theme**: Automatically detects and respects system theme preferences
-
-## ⚠️ Limitations
-
-1. **Offline Functionality**: Limited offline capabilities - authentication and store operations require network connectivity
-2. **Web Platform**: Web support is available but may have limited functionality compared to native platforms
-3. **Google Services**: Requires proper Google Services configuration for Google Sign-In to work
-4. **Development Client**: Uses Expo development builds, which require additional setup for certain native features
-5. **Push Notifications**: Notification functionality requires proper configuration of APNs (iOS) and FCM (Android)
-6. **Environment Variables**: Some features depend on proper environment variable configuration
+- **React Navigation**
+- **React Native MMKV**
+- **Google Sign-In**
+- **Expo Notifications**
 
 ## 🏗️ Development Approach
 
@@ -177,24 +131,6 @@ app/
 1. **Component Composition**: Building complex UIs from smaller, focused components
 2. **Custom Hooks**: Encapsulating stateful logic and side effects
 3. **Context Providers**: Managing global state with React Context
-4. **Error Boundaries**: Proper error handling throughout the application
-
-## 📚 Available Scripts
-
-- `npm start`: Start Expo development server
-- `npm run android`: Run on Android device/emulator
-- `npm run ios`: Run on iOS device/simulator
-- `npm run web`: Run web version
-- `npm run prebuild`: Generate native code
-- `npm run prebuild:clean`: Clean and regenerate native code
-
-## 🤝 Contributing
-
-1. Follow the existing code structure and naming conventions
-2. Use TypeScript for all new code
-3. Ensure components are properly themed using the ThemeContext
-4. Add proper error handling for network requests
-5. Test on both iOS and Android platforms
 
 ## 📝 Notes
 
