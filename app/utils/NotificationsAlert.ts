@@ -1,32 +1,16 @@
 import * as Notifications from "expo-notifications";
 import { Alert } from "react-native";
 
-export const NotificationsAlert = () => {
-  // to show the alert
+export const initNotification = () => {
   Notifications.setNotificationHandler({
     handleNotification: async () => ({
       shouldShowBanner: true,
       shouldShowList: true,
-      shouldPlaySound: false,
+      shouldPlaySound: true,
       shouldSetBadge: false,
+      shouldShowAlert: true,
     }),
   });
-
-  const scheduleNotification = (title: string, body: string) => {
-    console.log("title: ", title, body);
-
-    Notifications.scheduleNotificationAsync({
-      content: {
-        title: title,
-        body: body,
-      },
-      trigger: null,
-    });
-  };
-
-  return {
-    scheduleNotification,
-  };
 };
 
 export async function requestNotificationPermission() {
@@ -36,7 +20,18 @@ export async function requestNotificationPermission() {
       "Notification",
       "Notification permission not granted. Please enable from settings."
     );
+    return;
   }
-
+  initNotification();
   return status === "granted";
 }
+
+export const scheduleNotification = (title: string, body: string) => {
+  Notifications.scheduleNotificationAsync({
+    content: {
+      title: title,
+      body: body,
+    },
+    trigger: null,
+  });
+};
