@@ -7,6 +7,7 @@ import {
   TouchableOpacity,
   Modal,
   Dimensions,
+  Alert,
 } from "react-native";
 import React, { useState, useEffect, useMemo } from "react";
 import { useTheme } from "@/utils/ThemeContext";
@@ -29,6 +30,8 @@ import {
 } from "@/network/api/requests/store-override";
 
 import DateTimePicker from "@react-native-community/datetimepicker";
+import Color from "@/utils/Color";
+import { Ionicons } from "@expo/vector-icons";
 
 // Import the interface, or define it locally if not exported
 
@@ -258,6 +261,25 @@ const HomeScreen = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  const confirmLogout = () => {
+    Alert.alert(
+      "Confirm Logout",
+      "Are you sure you want to log out?",
+      [
+        {
+          text: "Cancel",
+          style: "cancel",
+        },
+        {
+          text: "Logout",
+          style: "destructive",
+          onPress: () => logout(),
+        },
+      ],
+      { cancelable: true }
+    );
   };
 
   const createNewOverride = async () => {
@@ -1434,19 +1456,10 @@ const HomeScreen = () => {
           </View>
 
           <TouchableOpacity
-            style={[styles.plusButton, { backgroundColor: theme.primary }]}
-            onPress={() => setIsBottomSheetVisible(true)}
+            style={[styles.exitButton, {}]}
+            onPress={confirmLogout}
           >
-            <Text style={[styles.plusButtonText, { color: theme.buttonText }]}>
-              +
-            </Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={[styles.exitButton, { backgroundColor: "#EF4444" }]}
-            onPress={logout}
-          >
-            <Text style={[styles.exitButtonText, { color: "white" }]}>✕</Text>
+            <Ionicons name={"power-outline"} size={24} color={Color.blue} />
           </TouchableOpacity>
         </View>
       </View>
@@ -1645,6 +1658,15 @@ const HomeScreen = () => {
           </View>
         </View>
       </ScrollView>
+
+      <TouchableOpacity
+        style={[styles.plusButton, { backgroundColor: theme.primary }]}
+        onPress={() => setIsBottomSheetVisible(true)}
+      >
+        <Text style={[styles.plusButtonText, { color: theme.buttonText }]}>
+          +
+        </Text>
+      </TouchableOpacity>
 
       {/* Bottom Sheet Modal */}
       <Modal
@@ -1898,11 +1920,14 @@ const styles = StyleSheet.create({
     fontWeight: "600",
   },
   plusButton: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
+    width: 50,
+    height: 50,
+    borderRadius: 25,
     justifyContent: "center",
     alignItems: "center",
+    position: "absolute",
+    bottom: 10,
+    right: 10,
   },
   plusButtonText: {
     fontSize: 18,

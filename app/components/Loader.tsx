@@ -1,3 +1,4 @@
+import Color from "@/utils/Color";
 import React, { memo, useState } from "react";
 import { View, Modal, ActivityIndicator, StyleSheet } from "react-native";
 
@@ -15,7 +16,11 @@ const Loader = (props: any) => {
     >
       <View style={[styles.centeredView]}>
         <View style={styles.modalView}>
-          <ActivityIndicator size="large" color={"black"} animating={loading} />
+          <ActivityIndicator
+            size="large"
+            color={Color.blue}
+            animating={loading}
+          />
         </View>
       </View>
     </Modal>

@@ -4,7 +4,7 @@ const config: ExpoConfig = {
   name: "tryperdiem",
   slug: "boilerplate",
   version: "1.0.0",
-  icon: "./assets/branding/icon.png",
+  icon: "./assets/branding/logo.png",
   newArchEnabled: true,
   userInterfaceStyle: "light",
   android: {
