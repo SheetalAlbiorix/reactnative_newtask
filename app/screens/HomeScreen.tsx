@@ -22,6 +22,7 @@ import { createStoreTime } from "@/network/api/requests/store-times";
 import { createStoreOverride } from "@/network/api/requests/store-override";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import { useStoreManagement } from "@/hooks/useStoreManagement";
+import { Clock } from "lucide-react-native";
 
 const HomeScreen = () => {
   const { theme } = useTheme();
@@ -782,52 +783,58 @@ const HomeScreen = () => {
       >
         <View style={styles.mainContent}>
           {/* Timezone Toggle */}
-          <View style={styles.greetingContainer}>
-            <View style={styles.tabberContainer}>
-              <TouchableOpacity
-                style={[
-                  styles.tabButton,
-                  styles.tabButtonLeft,
-                  {
-                    backgroundColor: !useNewYorkTime
-                      ? theme.primary
-                      : theme.surface,
-                    borderColor: theme.border,
-                  },
-                ]}
-                onPress={() => setUseNewYorkTime(false)}
-              >
-                <Text
+          <View style={{ alignItems: "center", marginTop: 8 }}>
+            <Clock />
+
+            <View style={styles.greetingContainer}>
+              <View style={styles.tabberContainer}>
+                <TouchableOpacity
                   style={[
-                    styles.tabButtonText,
-                    { color: !useNewYorkTime ? theme.buttonText : theme.text },
+                    styles.tabButton,
+                    styles.tabButtonLeft,
+                    {
+                      backgroundColor: !useNewYorkTime
+                        ? theme.primary
+                        : theme.surface,
+                      borderColor: theme.border,
+                    },
                   ]}
+                  onPress={() => setUseNewYorkTime(false)}
                 >
-                  Local
-                </Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[
-                  styles.tabButton,
-                  styles.tabButtonRight,
-                  {
-                    backgroundColor: useNewYorkTime
-                      ? theme.primary
-                      : theme.surface,
-                    borderColor: theme.border,
-                  },
-                ]}
-                onPress={() => setUseNewYorkTime(true)}
-              >
-                <Text
+                  <Text
+                    style={[
+                      styles.tabButtonText,
+                      {
+                        color: !useNewYorkTime ? theme.buttonText : theme.text,
+                      },
+                    ]}
+                  >
+                    Local
+                  </Text>
+                </TouchableOpacity>
+                <TouchableOpacity
                   style={[
-                    styles.tabButtonText,
-                    { color: useNewYorkTime ? theme.buttonText : theme.text },
+                    styles.tabButton,
+                    styles.tabButtonRight,
+                    {
+                      backgroundColor: useNewYorkTime
+                        ? theme.primary
+                        : theme.surface,
+                      borderColor: theme.border,
+                    },
                   ]}
+                  onPress={() => setUseNewYorkTime(true)}
                 >
-                  NYC
-                </Text>
-              </TouchableOpacity>
+                  <Text
+                    style={[
+                      styles.tabButtonText,
+                      { color: useNewYorkTime ? theme.buttonText : theme.text },
+                    ]}
+                  >
+                    NYC
+                  </Text>
+                </TouchableOpacity>
+              </View>
             </View>
           </View>
 
@@ -1110,7 +1117,7 @@ const styles = StyleSheet.create({
     borderLeftWidth: 0.5,
   },
   tabButtonText: {
-    fontSize: 11,
+    fontSize: 12,
     fontWeight: "600",
   },
   exitButton: {
@@ -1126,11 +1133,11 @@ const styles = StyleSheet.create({
   greetingContainer: {
     flexDirection: "row",
     flex: 1,
-    justifyContent: "flex-end",
+    justifyContent: "center",
     alignItems: "center",
     marginBottom: 20,
     paddingHorizontal: 16,
-    paddingTop: 16,
+    paddingTop: 8,
   },
   storeTimesSection: {},
   loadingText: {

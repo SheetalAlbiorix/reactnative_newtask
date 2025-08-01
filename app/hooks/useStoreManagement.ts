@@ -281,7 +281,6 @@ export const useStoreManagement = () => {
   // Delete functions
   const deleteStoreTime = async (storeTimeId: string) => {
     try {
-      setLoading(true);
       await deleteStoreTimeByID(storeTimeId);
       await fetchAllStoreTimes();
 
@@ -302,7 +301,6 @@ export const useStoreManagement = () => {
 
   const deleteStoreOverride = async (storeOverrideId: string) => {
     try {
-      setLoading(true);
       await deleteStoreOverrideById({ id: storeOverrideId });
       await fetchAllStoreOverrides();
 
