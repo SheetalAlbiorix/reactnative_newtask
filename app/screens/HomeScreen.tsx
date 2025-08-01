@@ -23,10 +23,27 @@ import { createStoreOverride } from "@/network/api/requests/store-override";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import { useStoreManagement } from "@/hooks/useStoreManagement";
 import { Clock } from "lucide-react-native";
+import Strings from "@/utils/Strings";
+import {
+  getDayName,
+  getGreeting,
+  getLocalCity,
+  getMonthName,
+} from "@/utils/Helper";
 
 const HomeScreen = () => {
   const { theme } = useTheme();
   const { logout } = useAuth();
+
+  // Helper function for string templating
+  const formatString = (
+    template: string,
+    values: Record<string, string | number>
+  ) => {
+    return template.replace(/\{(\w+)\}/g, (match, key) =>
+      String(values[key] || match)
+    );
+  };
 
   // Use custom hook for store management
   const {
@@ -130,12 +147,12 @@ const HomeScreen = () => {
     const item = storeTimes.find((st) => st.id === storeTimeId);
     if (item) {
       showConfirmationAlert(
-        "Delete Store Hours",
-        `Are you sure you want to delete the ${getDayName(
-          item.day_of_week
-        )} store hours?`,
+        Strings.deleteStoreHours,
+        formatString(Strings.deleteStoreHoursConfirm, {
+          dayName: getDayName(item.day_of_week),
+        }),
         () => hookDeleteStoreTime(storeTimeId),
-        "Delete"
+        Strings.delete
       );
     }
   };
@@ -144,37 +161,54 @@ const HomeScreen = () => {
     const item = storeOverrides.find((so) => so.id === storeOverrideId);
     if (item) {
       showConfirmationAlert(
-        "Delete Override",
-        `Are you sure you want to delete the ${formatOverrideDate(
-          item.month,
-          item.day
-        )} override?`,
+        Strings.deleteOverride,
+        formatString(Strings.deleteOverrideConfirm, {
+          overrideDate: formatOverrideDate(item.month, item.day),
+        }),
         () => hookDeleteStoreOverride(storeOverrideId),
-        "Delete"
+        Strings.delete
       );
     }
   };
 
   const handleCancelNotificationWithConfirm = (notification: any) => {
     showConfirmationAlert(
-      "Cancel Notification",
-      "Are you sure you want to cancel this scheduled notification?",
+      Strings.cancelNotification,
+      Strings.cancelNotificationConfirm,
       () => handleCancelNotification(notification),
-      "Cancel"
+      Strings.delete
     );
   };
 
   // Create store time
   const createNewStoreTime = async () => {
     try {
+      // Validate end time is at least 1 minute after start time
+      if (newStoreTime.is_open) {
+        const [startHours, startMinutes] = newStoreTime.start_time
+          .split(":")
+          .map(Number);
+        const [endHours, endMinutes] = newStoreTime.end_time
+          .split(":")
+          .map(Number);
+
+        const startTimeInMinutes = startHours * 60 + startMinutes;
+        const endTimeInMinutes = endHours * 60 + endMinutes;
+
+        if (endTimeInMinutes <= startTimeInMinutes) {
+          alert(Strings.endTimeValidation);
+          return;
+        }
+      }
+
       const existingStoreTime = storeTimes.find(
         (st) => st.day_of_week === newStoreTime.day_of_week
       );
       if (existingStoreTime) {
         alert(
-          `Store time for ${getDayName(
-            newStoreTime.day_of_week
-          )} already exists. Please delete the existing one first.`
+          formatString(Strings.storeTimeExistsError, {
+            dayName: getDayName(newStoreTime.day_of_week),
+          })
         );
         return;
       }
@@ -191,22 +225,42 @@ const HomeScreen = () => {
       setShowStoreTimeModal(false);
     } catch (error) {
       console.error("Error creating store time:", error);
-      alert("Error creating store time. Please try again.");
+      alert(Strings.errorCreatingStoreTime);
     }
   };
 
   // Create store override
   const createNewOverride = async () => {
     try {
+      // Validate end time is at least 1 minute after start time
+      if (newOverride.is_open) {
+        const [startHours, startMinutes] = newOverride.start_time
+          .split(":")
+          .map(Number);
+        const [endHours, endMinutes] = newOverride.end_time
+          .split(":")
+          .map(Number);
+
+        const startTimeInMinutes = startHours * 60 + startMinutes;
+        const endTimeInMinutes = endHours * 60 + endMinutes;
+
+        if (endTimeInMinutes <= startTimeInMinutes) {
+          alert(Strings.endTimeValidation);
+          return;
+        }
+      }
+
       const existingOverride = storeOverrides.find(
         (so) => so.month === newOverride.month && so.day === newOverride.day
       );
       if (existingOverride) {
         alert(
-          `Override for ${formatOverrideDate(
-            newOverride.month,
-            newOverride.day
-          )} already exists. Please delete the existing one first.`
+          formatString(Strings.overrideExistsError, {
+            overrideDate: formatOverrideDate(
+              newOverride.month,
+              newOverride.day
+            ),
+          })
         );
         return;
       }
@@ -224,7 +278,7 @@ const HomeScreen = () => {
       setShowOverrideModal(false);
     } catch (error) {
       console.error("Error creating store override:", error);
-      alert("Error creating store override. Please try again.");
+      alert(Strings.errorCreatingStoreOverride);
     }
   };
 
@@ -235,11 +289,15 @@ const HomeScreen = () => {
       if (result) {
         setIsBottomSheetVisible(false);
         alert(
-          `Appointment confirmed!\nNYC Time: ${result.nycTime}\nLocal Time: ${result.localTime}\nNotification scheduled for 15 minutes before.`
+          formatString(Strings.appointmentConfirmed, {
+            nycTime: result.nycTime,
+            localTime: result.localTime,
+          })
         );
+        clearSelection();
       }
     } catch (error) {
-      alert("Error confirming appointment. Please try again.");
+      alert(Strings.errorConfirmingAppointment);
     }
   };
 
@@ -252,85 +310,16 @@ const HomeScreen = () => {
     }
   };
 
-  // Get greeting message based on time of day
-  const getGreeting = () => {
-    const nycTime = new Date().toLocaleString("en-US", {
-      timeZone: "America/New_York",
-    });
-    const nycDate = new Date(nycTime);
-    const hour = nycDate.getHours();
-
-    if (hour >= 5 && hour <= 9) {
-      return "Good Morning";
-    } else if (hour >= 10 && hour <= 11) {
-      return "Late Morning Vibes!";
-    } else if (hour >= 12 && hour <= 16) {
-      return "Good Afternoon";
-    } else if (hour >= 17 && hour <= 20) {
-      return "Good Evening";
-    } else {
-      return "Night Owl";
-    }
-  };
-
-  // Get local city name from timezone
-  const getLocalCity = () => {
-    try {
-      const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
-      const parts = timezone.split("/");
-      if (parts.length > 1) {
-        return parts[parts.length - 1].replace(/_/g, " ");
-      }
-      return timezone;
-    } catch (error) {
-      return "Local";
-    }
-  };
-
   // Get greeting message with city and timezone indicator
   const getGreetingMessage = () => {
     const greeting = getGreeting();
-    const city = useNewYorkTime ? "NYC" : getLocalCity();
+    const city = useNewYorkTime ? Strings.nyc : getLocalCity();
 
-    if (greeting === "Night Owl") {
+    if (greeting === Strings.nightOwl) {
       return `${greeting} in ${city}!`;
     }
 
     return `${greeting}, ${city}!`;
-  };
-
-  // Get day name from day number
-  const getDayName = (dayOfWeek: number): string => {
-    const days = [
-      "Sunday",
-      "Monday",
-      "Tuesday",
-      "Wednesday",
-      "Thursday",
-      "Friday",
-      "Saturday",
-    ];
-    return days[dayOfWeek] || "Unknown";
-  };
-
-  // Get month name from month number
-  const getMonthName = (month: number): string => {
-    const months = [
-      "",
-      "January",
-      "February",
-      "March",
-      "April",
-      "May",
-      "June",
-      "July",
-      "August",
-      "September",
-      "October",
-      "November",
-      "December",
-    ];
-    return months[month] || "Unknown";
   };
 
   // Format date for store override display
@@ -747,7 +736,7 @@ const HomeScreen = () => {
           <Button
             onPress={createNewOverride}
             disabled={loading}
-            style={{ flex: 1, backgroundColor: "#F59E0B" }}
+            style={{ flex: 1, backgroundColor: theme.warning }}
           >
             {loading ? "Creating..." : "Create Override"}
           </Button>
@@ -768,23 +757,23 @@ const HomeScreen = () => {
             {getFormattedTime()}
           </Text>
         </View>
-        <View style={styles.headerRight}>
-          <TouchableOpacity
-            style={[styles.exitButton, { backgroundColor: "#EF4444" }]}
-            onPress={() =>
-              showConfirmationAlert(
-                "Log Out",
-                "Are you sure you want to log out?",
-                logout,
-                "Log Out"
-              )
-            }
-          >
-            <Text style={[styles.exitButtonText, { color: "white" }]}>
-              Log Out
-            </Text>
-          </TouchableOpacity>
-        </View>
+        {/* <View style={styles.headerRight}> */}
+        <TouchableOpacity
+          style={[styles.exitButton, { backgroundColor: theme.error }]}
+          onPress={() =>
+            showConfirmationAlert(
+              "Log Out",
+              "Are you sure you want to log out?",
+              logout,
+              "Log Out"
+            )
+          }
+        >
+          <Text style={[styles.exitButtonText, { color: theme.card }]}>
+            Log Out
+          </Text>
+        </TouchableOpacity>
+        {/* </View> */}
       </View>
 
       <ScrollView
@@ -1078,7 +1067,8 @@ const styles = StyleSheet.create({
   },
   exitButton: {
     borderRadius: 16,
-    padding: 8,
+    paddingVertical: 8,
+    paddingHorizontal: 16,
     justifyContent: "center",
     alignItems: "center",
   },

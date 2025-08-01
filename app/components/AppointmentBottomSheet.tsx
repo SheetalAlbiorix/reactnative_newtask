@@ -113,45 +113,48 @@ const AppointmentBottomSheet: React.FC<AppointmentBottomSheetProps> = ({
             </View>
 
             {/* Time Slots */}
-            {selectedDate && (
-              <View style={styles.bottomSheetTimeSlotsSection}>
-                <Text
-                  style={[
-                    styles.bottomSheetSectionTitle,
-                    { color: theme.text },
-                  ]}
-                >
-                  Time Slots (NYC Time) - {selectedDate.formattedDate}
-                </Text>
-                {isStoreClosed(selectedDate) ? (
-                  <View style={styles.closedContainer}>
-                    <Text
-                      style={[
-                        styles.closedText,
-                        { color: theme.textSecondary },
-                      ]}
-                    >
-                      🔒 Store is Closed
-                    </Text>
-                    <Text
-                      style={[
-                        styles.closedSubText,
-                        { color: theme.textSecondary },
-                      ]}
-                    >
-                      No appointments available on this day
-                    </Text>
-                  </View>
-                ) : (
-                  <TimeSlotsGrid
-                    timeSlots={timeSlots}
-                    selectedTimeSlot={selectedTimeSlot}
-                    onTimeSlotPress={onTimeSlotPress}
-                    loading={loading}
-                  />
-                )}
-              </View>
-            )}
+            <View style={styles.bottomSheetTimeSlotsSection}>
+              <Text
+                style={[styles.bottomSheetSectionTitle, { color: theme.text }]}
+              >
+                {selectedDate
+                  ? `Time Slots (NYC Time) - ${selectedDate.formattedDate}`
+                  : "Time Slots (NYC Time)"}
+              </Text>
+              {!selectedDate ? (
+                <View style={styles.noDateContainer}>
+                  <Text
+                    style={[styles.noDateText, { color: theme.textSecondary }]}
+                  >
+                    📅 Please select an open store date to get available time
+                    slots
+                  </Text>
+                </View>
+              ) : isStoreClosed(selectedDate) ? (
+                <View style={styles.closedContainer}>
+                  <Text
+                    style={[styles.closedText, { color: theme.textSecondary }]}
+                  >
+                    🔒 Store is Closed
+                  </Text>
+                  <Text
+                    style={[
+                      styles.closedSubText,
+                      { color: theme.textSecondary },
+                    ]}
+                  >
+                    No appointments available on this day
+                  </Text>
+                </View>
+              ) : (
+                <TimeSlotsGrid
+                  timeSlots={timeSlots}
+                  selectedTimeSlot={selectedTimeSlot}
+                  onTimeSlotPress={onTimeSlotPress}
+                  loading={loading}
+                />
+              )}
+            </View>
 
             {/* Selected Appointment */}
             {selectedDate && selectedTimeSlot && (
@@ -260,11 +263,12 @@ const styles = StyleSheet.create({
   },
   bottomSheetContent: {
     flex: 1,
+    marginBottom: 16,
   },
   bottomSheetDatesSection: {
     marginBottom: 24,
   },
-  bottomSheetTimeSlotsSection: {},
+  bottomSheetTimeSlotsSection: { flex: 1, marginBottom: 10 },
   bottomSheetSectionTitle: {
     fontSize: 16,
     fontWeight: "600",
@@ -283,6 +287,18 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     paddingVertical: 32,
     paddingHorizontal: 16,
+  },
+  noDateContainer: {
+    alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: 40,
+    paddingHorizontal: 16,
+  },
+  noDateText: {
+    fontSize: 16,
+    textAlign: "center",
+    fontStyle: "italic",
+    lineHeight: 22,
   },
   closedText: {
     fontSize: 18,

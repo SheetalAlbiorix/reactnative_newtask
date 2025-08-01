@@ -106,7 +106,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
   },
   timeSlotsContainer: {
-    maxHeight: 300,
+    flex: 1,
+    paddingBottom: 24,
   },
   timeSlot: {
     flex: 1,
