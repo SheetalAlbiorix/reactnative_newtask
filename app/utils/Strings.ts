@@ -5,4 +5,7 @@ export default {
   loginError: "Login error",
   loginFailed: "Login failed",
   unknownError: "Unknown error",
+  login: "Login",
+  loginWithGoogle: "Login with Google",
+  or: "OR",
 };

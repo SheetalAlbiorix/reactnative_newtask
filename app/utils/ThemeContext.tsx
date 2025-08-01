@@ -112,8 +112,7 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
     return StorageUtils.get(StorageKey.APP_THEME);
   });
 
-  const theme = darkTheme; // Prevent not swithcing themes for now
-  // const theme = isDarkMode ? darkTheme : lightTheme; // Use this line
+  const theme = isDarkMode ? darkTheme : lightTheme; // Use this line
 
   // Toggle theme and save preference to storage
   const toggleTheme = (): void => {

@@ -23,6 +23,7 @@
     "date-fns-tz": "^3.2.0",
     "expo": "^53.0.13",
     "expo-font": "~13.3.1",
+    "expo-notifications": "^0.31.4",
     "expo-status-bar": "~2.2.3",
     "expo-system-ui": "~5.0.9",
     "lucide-react-native": "^0.525.0",

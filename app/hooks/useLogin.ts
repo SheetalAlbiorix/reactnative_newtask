@@ -40,8 +40,15 @@ const UseLogin = () => {
       const userDetails = await GoogleSignin.signIn();
       const { idToken, accessToken } = await GoogleSignin.getTokens();
 
-      if (userDetails && idToken) {
-        login(idToken, LoginType.google);
+      console.log(
+        "Google Sign-In successful",
+        userDetails,
+        idToken,
+        accessToken
+      );
+
+      if (userDetails && accessToken) {
+        login(accessToken, LoginType.google);
         navigation.navigate("Home");
       }
     } catch (error) {

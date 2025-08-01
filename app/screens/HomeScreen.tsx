@@ -20,6 +20,7 @@ import {
   getStoreTimes,
   getStoreTimesByDay,
 } from "@/network/api/requests/store-times";
+import { scheduleNotification } from "@/utils/NotificationsAlert";
 
 // Import the interface, or define it locally if not exported
 
@@ -68,19 +69,10 @@ const HomeScreen = () => {
   useEffect(() => {
     const timer = setInterval(() => {
       setCurrentTime(new Date());
+      // scheduleNotification("Hello!!", "Welcome to App");
     }, 1000);
 
     return () => clearInterval(timer);
-  }, []);
-  useEffect(() => {
-    createStoreTime({
-      day_of_week: 2,
-      is_open: true,
-      start_time: "09:00",
-      end_time: "18:00",
-    }).then((times) => {
-      console.log("Store Times:", times);
-    });
   }, []);
 
   // Fetch store times for today initially
