@@ -5,6 +5,7 @@ import {
   ScrollView,
   TouchableOpacity,
   Modal,
+  Platform,
 } from "react-native";
 import React, { useState, useEffect } from "react";
 import { useTheme } from "@/utils/ThemeContext";
@@ -330,7 +331,19 @@ const HomeScreen = () => {
 
   // Handle date/time picker change
   const handleDateTimePickerChange = (event: any, selectedValue?: Date) => {
-    if (selectedValue) {
+    // console.log("Picker changed:", event, selectedValue);
+
+    if (Platform.OS === "android") {
+      if (event.type === "dismissed") {
+        setShowDateTimePicker(null);
+        return;
+      } else if (event.type === "set") {
+        setTempPickerValue(selectedValue);
+        if (selectedValue) {
+          handleDateTimePickerDone();
+        }
+      }
+    } else if (selectedValue) {
       setTempPickerValue(selectedValue);
     }
   };
@@ -906,54 +919,67 @@ const HomeScreen = () => {
       />
 
       {/* Date/Time Picker */}
-      {showDateTimePicker && (
-        <View style={styles.dateTimePickerOverlay}>
-          <View style={styles.dateTimePickerContainer}>
-            <DateTimePicker
-              value={tempPickerValue}
-              mode={showDateTimePicker.type}
-              display="spinner"
-              themeVariant="light"
-              style={styles.dateTimePicker}
-              onChange={handleDateTimePickerChange}
-            />
-            <View style={styles.dateTimePickerActions}>
-              <TouchableOpacity
-                style={[
-                  styles.dateTimePickerButton,
-                  { backgroundColor: theme.surface, borderColor: theme.border },
-                ]}
-                onPress={() => setShowDateTimePicker(null)}
-              >
-                <Text
+      {showDateTimePicker &&
+        (Platform.OS === "android" ? (
+          <DateTimePicker
+            value={tempPickerValue}
+            mode={showDateTimePicker.type}
+            display="spinner"
+            themeVariant="light"
+            style={styles.dateTimePicker}
+            onChange={handleDateTimePickerChange}
+          />
+        ) : (
+          <View style={styles.dateTimePickerOverlay}>
+            <View style={styles.dateTimePickerContainer}>
+              <DateTimePicker
+                value={tempPickerValue}
+                mode={showDateTimePicker.type}
+                display="spinner"
+                themeVariant="light"
+                style={styles.dateTimePicker}
+                onChange={handleDateTimePickerChange}
+              />
+              <View style={styles.dateTimePickerActions}>
+                <TouchableOpacity
                   style={[
-                    styles.dateTimePickerButtonText,
-                    { color: theme.text },
+                    styles.dateTimePickerButton,
+                    {
+                      backgroundColor: theme.surface,
+                      borderColor: theme.border,
+                    },
                   ]}
+                  onPress={() => setShowDateTimePicker(null)}
                 >
-                  Cancel
-                </Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[
-                  styles.dateTimePickerButton,
-                  { backgroundColor: theme.primary },
-                ]}
-                onPress={handleDateTimePickerDone}
-              >
-                <Text
+                  <Text
+                    style={[
+                      styles.dateTimePickerButtonText,
+                      { color: theme.text },
+                    ]}
+                  >
+                    Cancel
+                  </Text>
+                </TouchableOpacity>
+                <TouchableOpacity
                   style={[
-                    styles.dateTimePickerButtonText,
-                    { color: theme.buttonText },
+                    styles.dateTimePickerButton,
+                    { backgroundColor: theme.primary },
                   ]}
+                  onPress={handleDateTimePickerDone}
                 >
-                  Done
-                </Text>
-              </TouchableOpacity>
+                  <Text
+                    style={[
+                      styles.dateTimePickerButtonText,
+                      { color: theme.buttonText },
+                    ]}
+                  >
+                    Done
+                  </Text>
+                </TouchableOpacity>
+              </View>
             </View>
           </View>
-        </View>
-      )}
+        ))}
 
       {/* Store Time Form Modal */}
       {showStoreTimeModal && (
