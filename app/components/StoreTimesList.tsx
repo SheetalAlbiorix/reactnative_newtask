@@ -89,7 +89,7 @@ const StoreTimesList: React.FC<StoreTimesListProps> = ({
           </View>
         </View>
       </TouchableOpacity>
-      {isExpanded && storeTimes.length > 0 && (
+      {isExpanded && (
         <FlatList
           data={storeTimes}
           renderItem={renderStoreTimeItem}
@@ -98,6 +98,13 @@ const StoreTimesList: React.FC<StoreTimesListProps> = ({
           showsHorizontalScrollIndicator={false}
           style={styles.horizontalList}
           contentContainerStyle={styles.horizontalListContent}
+          ListEmptyComponent={
+            <View style={{ padding: 16 }}>
+              <Text style={{ color: theme.textSecondary, textAlign: "center" }}>
+                No store times available
+              </Text>
+            </View>
+          }
         />
       )}
     </View>

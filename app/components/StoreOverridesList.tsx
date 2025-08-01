@@ -99,7 +99,7 @@ const StoreOverridesList: React.FC<StoreOverridesListProps> = ({
           </View>
         </View>
       </TouchableOpacity>
-      {isExpanded && storeOverrides.length > 0 && (
+      {isExpanded && (
         <FlatList
           data={storeOverrides}
           renderItem={renderStoreOverrideItem}
@@ -108,6 +108,13 @@ const StoreOverridesList: React.FC<StoreOverridesListProps> = ({
           showsHorizontalScrollIndicator={false}
           style={styles.horizontalList}
           contentContainerStyle={styles.horizontalListContent}
+          ListEmptyComponent={
+            <View style={{ padding: 16 }}>
+              <Text style={{ color: theme.textSecondary, textAlign: "center" }}>
+                No Holiday times available
+              </Text>
+            </View>
+          }
         />
       )}
     </View>

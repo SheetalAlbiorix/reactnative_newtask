@@ -295,7 +295,6 @@ export const useStoreManagement = () => {
     } catch (error) {
       console.error("Error deleting store time:", error);
     } finally {
-      setLoading(false);
     }
   };
 
@@ -315,7 +314,6 @@ export const useStoreManagement = () => {
     } catch (error) {
       console.error("Error deleting store override:", error);
     } finally {
-      setLoading(false);
     }
   };
 

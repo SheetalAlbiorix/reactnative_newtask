@@ -853,82 +853,28 @@ const HomeScreen = () => {
                 {showCreateForm === "override" && renderCreateOverrideForm()}
 
                 {/* Regular Store Times */}
-                {(storeTimes.length > 0 || !isRegularHoursExpanded) && (
-                  <StoreTimesList
-                    storeTimes={storeTimes}
-                    onAddPress={() => setShowStoreTimeModal(true)}
-                    onDeletePress={deleteStoreTime}
-                    getDayName={getDayName}
-                    isExpanded={isRegularHoursExpanded}
-                    onToggleExpand={() =>
-                      setIsRegularHoursExpanded(!isRegularHoursExpanded)
-                    }
-                  />
-                )}
+                <StoreTimesList
+                  storeTimes={storeTimes}
+                  onAddPress={() => setShowStoreTimeModal(true)}
+                  onDeletePress={deleteStoreTime}
+                  getDayName={getDayName}
+                  isExpanded={isRegularHoursExpanded}
+                  onToggleExpand={() =>
+                    setIsRegularHoursExpanded(!isRegularHoursExpanded)
+                  }
+                />
 
                 {/* Store Overrides */}
-                {(storeOverrides.length > 0 || !isOverridesExpanded) && (
-                  <StoreOverridesList
-                    storeOverrides={storeOverrides}
-                    onAddPress={() => setShowOverrideModal(true)}
-                    onDeletePress={deleteStoreOverride}
-                    formatOverrideDate={formatOverrideDate}
-                    isExpanded={isOverridesExpanded}
-                    onToggleExpand={() =>
-                      setIsOverridesExpanded(!isOverridesExpanded)
-                    }
-                  />
-                )}
-
-                {/* Empty State */}
-                {storeTimes.length === 0 &&
-                  storeOverrides.length === 0 &&
-                  !showCreateForm && (
-                    <View style={styles.emptyStateContainer}>
-                      <Text
-                        style={[
-                          styles.emptyText,
-                          { color: theme.textSecondary },
-                        ]}
-                      >
-                        No store schedule available
-                      </Text>
-                      <View style={styles.emptyStateActions}>
-                        <TouchableOpacity
-                          style={[
-                            styles.emptyStateButton,
-                            { backgroundColor: theme.primary },
-                          ]}
-                          onPress={() => setShowCreateForm("storeTime")}
-                        >
-                          <Text
-                            style={[
-                              styles.emptyStateButtonText,
-                              { color: theme.buttonText },
-                            ]}
-                          >
-                            Add Store Hours
-                          </Text>
-                        </TouchableOpacity>
-                        <TouchableOpacity
-                          style={[
-                            styles.emptyStateButton,
-                            { backgroundColor: "#F59E0B" },
-                          ]}
-                          onPress={() => setShowCreateForm("override")}
-                        >
-                          <Text
-                            style={[
-                              styles.emptyStateButtonText,
-                              { color: "white" },
-                            ]}
-                          >
-                            Add Override
-                          </Text>
-                        </TouchableOpacity>
-                      </View>
-                    </View>
-                  )}
+                <StoreOverridesList
+                  storeOverrides={storeOverrides}
+                  onAddPress={() => setShowOverrideModal(true)}
+                  onDeletePress={deleteStoreOverride}
+                  formatOverrideDate={formatOverrideDate}
+                  isExpanded={isOverridesExpanded}
+                  onToggleExpand={() =>
+                    setIsOverridesExpanded(!isOverridesExpanded)
+                  }
+                />
               </>
             )}
           </View>
@@ -1145,30 +1091,6 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontStyle: "italic",
   },
-  emptyStateContainer: {
-    alignItems: "center",
-    paddingVertical: 32,
-  },
-  emptyText: {
-    textAlign: "center",
-    fontSize: 14,
-    fontStyle: "italic",
-    paddingVertical: 20,
-  },
-  emptyStateActions: {
-    flexDirection: "row",
-    gap: 12,
-    marginTop: 16,
-  },
-  emptyStateButton: {
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-    borderRadius: 8,
-  },
-  emptyStateButtonText: {
-    fontSize: 14,
-    fontWeight: "600",
-  },
   createFormContainer: {
     marginBottom: 20,
     borderRadius: 16,
@@ -1297,6 +1219,7 @@ const styles = StyleSheet.create({
   dateTimePicker: {
     backgroundColor: "white",
     borderRadius: 8,
+    zIndex: 3,
   },
   dateTimePickerActions: {
     flexDirection: "row",
