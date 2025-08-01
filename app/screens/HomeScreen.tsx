@@ -12,8 +12,15 @@ import React, { useState, useEffect, useMemo } from "react";
 import { useTheme } from "@/utils/ThemeContext";
 import Button from "@/components/Button";
 import Screen from "@/components/Screen";
+import CustomAlert from "@/components/CustomAlert";
+import Input from "@/components/Input";
 import { useAuth } from "@/utils/AuthContext";
-import { format, formatInTimeZone } from "date-fns-tz";
+import {
+  format,
+  formatInTimeZone,
+  fromZonedTime,
+  toZonedTime,
+} from "date-fns-tz";
 import { addDays } from "date-fns";
 import {
   getStoreTimes,
@@ -29,6 +36,14 @@ import {
 } from "@/network/api/requests/store-override";
 
 import DateTimePicker from "@react-native-community/datetimepicker";
+import {
+  scheduleNotificationAtTime,
+  cancelNotification,
+  saveScheduledNotification,
+  getScheduledNotifications,
+  removeScheduledNotification,
+  ScheduledNotification,
+} from "@/utils/NotificationsAlert";
 
 // Import the interface, or define it locally if not exported
 
@@ -87,10 +102,14 @@ const HomeScreen = () => {
   const [showCreateForm, setShowCreateForm] = useState<
     "storeTime" | "override" | null
   >(null);
+  const [isRegularHoursExpanded, setIsRegularHoursExpanded] = useState(true);
+  const [isOverridesExpanded, setIsOverridesExpanded] = useState(true);
+  const [showStoreTimeModal, setShowStoreTimeModal] = useState(false);
+  const [showOverrideModal, setShowOverrideModal] = useState(false);
   const [showDateTimePicker, setShowDateTimePicker] = useState<{
     type: "time" | "date";
-    field: "start_time" | "end_time" | "month" | "day";
-    formType: "storeTime" | "override";
+    field: "start_time" | "end_time" | "month" | "day" | "scheduledDate";
+    formType: "storeTime" | "override" | "notification";
   } | null>(null);
   const [newStoreTime, setNewStoreTime] = useState({
     day_of_week: 0,
@@ -105,6 +124,28 @@ const HomeScreen = () => {
     end_time: "17:00",
     is_open: true,
   });
+  const [scheduledNotifications, setScheduledNotifications] = useState<
+    ScheduledNotification[]
+  >([]);
+  const [showNotificationForm, setShowNotificationForm] = useState(false);
+  const [notificationForm, setNotificationForm] = useState({
+    title: "",
+    body: "",
+    scheduledDate: new Date(),
+  });
+  const [alertConfig, setAlertConfig] = useState<{
+    visible: boolean;
+    title: string;
+    message: string;
+    onConfirm: () => void;
+    confirmText?: string;
+  }>({
+    visible: false,
+    title: "",
+    message: "",
+    onConfirm: () => {},
+    confirmText: "Confirm",
+  });
 
   // Update time every second
   useEffect(() => {
@@ -118,20 +159,16 @@ const HomeScreen = () => {
   useEffect(() => {
     fetchAllStoreTimes();
     fetchAllStoreOverrides();
+    loadScheduledNotifications();
   }, []);
 
-  // Regenerate time slots when timezone changes
+  // Regenerate time slots when data changes
   useEffect(() => {
     if (selectedDate && storeTimes.length > 0) {
-      const slots = generateTimeSlots(
-        selectedDate,
-        storeTimes,
-        storeOverrides,
-        useNewYorkTime
-      );
+      const slots = generateTimeSlots(selectedDate, storeTimes, storeOverrides);
       setTimeSlots(slots);
     }
-  }, [useNewYorkTime, selectedDate, storeTimes, storeOverrides]);
+  }, [selectedDate, storeTimes, storeOverrides]);
 
   const fetchAllStoreTimes = async () => {
     try {
@@ -151,11 +188,108 @@ const HomeScreen = () => {
     try {
       const overrides = await getStoreOverrides();
       setStoreOverrides(overrides);
-      console.log("All Store Overrides:", overrides);
     } catch (error) {
       console.error("Error fetching store overrides:", error);
       setStoreOverrides([]);
     }
+  };
+
+  const loadScheduledNotifications = () => {
+    const notifications = getScheduledNotifications();
+    setScheduledNotifications(notifications);
+  };
+
+  const handleScheduleNotification = async () => {
+    if (!notificationForm.title.trim() || !notificationForm.body.trim()) {
+      alert("Please enter both title and body for the notification");
+      return;
+    }
+
+    try {
+      setLoading(true);
+      const notificationId = await scheduleNotificationAtTime(
+        notificationForm.title,
+        notificationForm.body,
+        notificationForm.scheduledDate
+      );
+
+      if (notificationId) {
+        const newNotification: ScheduledNotification = {
+          id: Date.now().toString(),
+          title: notificationForm.title,
+          body: notificationForm.body,
+          scheduledDate: notificationForm.scheduledDate
+            .toISOString()
+            .split("T")[0],
+          scheduledTime: notificationForm.scheduledDate
+            .toTimeString()
+            .slice(0, 5),
+          notificationId: notificationId,
+          createdAt: new Date().toISOString(),
+        };
+
+        saveScheduledNotification(newNotification);
+        loadScheduledNotifications();
+
+        // Reset form
+        setNotificationForm({
+          title: "",
+          body: "",
+          scheduledDate: new Date(),
+        });
+        setShowNotificationForm(false);
+
+        alert("Notification scheduled successfully!");
+      }
+    } catch (error) {
+      console.error("Error scheduling notification:", error);
+      alert("Failed to schedule notification");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleCancelNotification = async (
+    notification: ScheduledNotification
+  ) => {
+    try {
+      setLoading(true);
+      const success = await cancelNotification(notification.notificationId);
+
+      if (success) {
+        removeScheduledNotification(notification.id);
+        loadScheduledNotifications();
+        alert("Notification cancelled successfully!");
+      } else {
+        alert("Failed to cancel notification");
+      }
+    } catch (error) {
+      console.error("Error cancelling notification:", error);
+      alert("Failed to cancel notification");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Helper function to show confirmation alert
+  const showConfirmationAlert = (
+    title: string,
+    message: string,
+    onConfirm: () => void,
+    confirmText: string = "Delete"
+  ) => {
+    setAlertConfig({
+      visible: true,
+      title,
+      message,
+      onConfirm,
+      confirmText,
+    });
+  };
+
+  // Helper function to hide alert
+  const hideAlert = () => {
+    setAlertConfig((prev) => ({ ...prev, visible: false }));
   };
 
   const deleteStoreTime = async (storeTimeId: string) => {
@@ -172,8 +306,7 @@ const HomeScreen = () => {
         const slots = generateTimeSlots(
           selectedDate,
           storeTimes.filter((st) => st.id !== storeTimeId), // Use filtered array immediately
-          storeOverrides,
-          useNewYorkTime
+          storeOverrides
         );
         setTimeSlots(slots);
       }
@@ -198,8 +331,7 @@ const HomeScreen = () => {
         const slots = generateTimeSlots(
           selectedDate,
           storeTimes,
-          storeOverrides.filter((so) => so.id !== storeOverrideId),
-          useNewYorkTime
+          storeOverrides.filter((so) => so.id !== storeOverrideId)
         );
         setTimeSlots(slots);
       }
@@ -240,15 +372,14 @@ const HomeScreen = () => {
         end_time: "17:00",
         is_open: true,
       });
-      setShowCreateForm(null);
+      setShowStoreTimeModal(false);
 
       // If we have a selected date, regenerate time slots
       if (selectedDate) {
         const slots = generateTimeSlots(
           selectedDate,
           [...storeTimes, createdStoreTime],
-          storeOverrides,
-          useNewYorkTime
+          storeOverrides
         );
         setTimeSlots(slots);
       }
@@ -292,16 +423,14 @@ const HomeScreen = () => {
         end_time: "17:00",
         is_open: true,
       });
-      setShowCreateForm(null);
+      setShowOverrideModal(false);
 
       // If we have a selected date, regenerate time slots
       if (selectedDate) {
-        const slots = generateTimeSlots(
-          selectedDate,
-          storeTimes,
-          [...storeOverrides, createdOverride],
-          useNewYorkTime
-        );
+        const slots = generateTimeSlots(selectedDate, storeTimes, [
+          ...storeOverrides,
+          createdOverride,
+        ]);
         setTimeSlots(slots);
       }
     } catch (error) {
@@ -367,12 +496,11 @@ const HomeScreen = () => {
     };
   };
 
-  // Generate 15-minute time slots for all 24 hours
+  // Generate 15-minute time slots for all 24 hours (always in NYC timezone)
   const generateTimeSlots = (
     date: DateItem,
     allStoreTimes: StoreTimesResponse[],
-    allStoreOverrides: StoreOverrideResponse[],
-    useNYCTimezone: boolean = useNewYorkTime
+    allStoreOverrides: StoreOverrideResponse[]
   ): TimeSlot[] => {
     const slots: TimeSlot[] = [];
 
@@ -388,7 +516,7 @@ const HomeScreen = () => {
       return slots;
     }
 
-    // Generate 15-minute intervals for all 24 hours (00:00 to 23:45)
+    // Generate 15-minute intervals for all 24 hours (00:00 to 23:45) in NYC time
     let slotId = 0;
     for (let hour = 0; hour < 24; hour++) {
       for (let minute = 0; minute < 60; minute += 15) {
@@ -400,47 +528,17 @@ const HomeScreen = () => {
         const currentTimeInMinutes = hour * 60 + minute;
         let isAvailable = false;
 
-        // Check against all store hours for this day
+        // Check against all store hours for this day (store hours are in NYC time)
         for (const storeHour of storeAvailability.hours) {
-          let storeStartHour = 0;
-          let storeStartMinute = 0;
-          let storeEndHour = 0;
-          let storeEndMinute = 0;
-
-          // Parse start and end times
-          [storeStartHour, storeStartMinute] = storeHour.start_time
+          const [storeStartHour, storeStartMinute] = storeHour.start_time
             .split(":")
             .map(Number);
-          [storeEndHour, storeEndMinute] = storeHour.end_time
+          const [storeEndHour, storeEndMinute] = storeHour.end_time
             .split(":")
             .map(Number);
 
-          // Convert store hours to local timezone if needed
-          let adjustedStoreStartHour = storeStartHour;
-          let adjustedStoreStartMinute = storeStartMinute;
-          let adjustedStoreEndHour = storeEndHour;
-          let adjustedStoreEndMinute = storeEndMinute;
-
-          if (!useNYCTimezone) {
-            // Calculate timezone offset between local time and NYC time
-            const now = new Date();
-            const localTime = new Date(now.getTime());
-            const nycTime = new Date(
-              now.toLocaleString("en-US", { timeZone: "America/New_York" })
-            );
-            const offsetHours = Math.round(
-              (localTime.getTime() - nycTime.getTime()) / (1000 * 60 * 60)
-            );
-
-            // Adjust store hours to local timezone
-            adjustedStoreStartHour = (storeStartHour + offsetHours + 24) % 24;
-            adjustedStoreEndHour = (storeEndHour + offsetHours + 24) % 24;
-          }
-
-          const storeStartInMinutes =
-            adjustedStoreStartHour * 60 + adjustedStoreStartMinute;
-          const storeEndInMinutes =
-            adjustedStoreEndHour * 60 + adjustedStoreEndMinute;
+          const storeStartInMinutes = storeStartHour * 60 + storeStartMinute;
+          const storeEndInMinutes = storeEndHour * 60 + storeEndMinute;
 
           // Handle case where store hours cross midnight (e.g., 22:00 to 06:00)
           if (storeEndInMinutes < storeStartInMinutes) {
@@ -498,12 +596,7 @@ const HomeScreen = () => {
     setSelectedTimeSlot(null);
 
     // Generate time slots for the selected date using current data
-    const slots = generateTimeSlots(
-      dateItem,
-      storeTimes,
-      storeOverrides,
-      useNewYorkTime
-    );
+    const slots = generateTimeSlots(dateItem, storeTimes, storeOverrides);
     setTimeSlots(slots);
   };
 
@@ -686,6 +779,13 @@ const HomeScreen = () => {
           }));
         }
       }
+    } else if (formType === "notification") {
+      if (field === "scheduledDate") {
+        setNotificationForm((prev) => ({
+          ...prev,
+          scheduledDate: selectedValue,
+        }));
+      }
     }
 
     setShowDateTimePicker(null);
@@ -694,8 +794,8 @@ const HomeScreen = () => {
   // Show date/time picker
   const showPicker = (
     type: "time" | "date",
-    field: "start_time" | "end_time" | "month" | "day",
-    formType: "storeTime" | "override"
+    field: "start_time" | "end_time" | "month" | "day" | "scheduledDate",
+    formType: "storeTime" | "override" | "notification"
   ) => {
     setShowDateTimePicker({ type, field, formType });
   };
@@ -736,6 +836,8 @@ const HomeScreen = () => {
         }
         return date;
       }
+    } else if (formType === "notification" && field === "scheduledDate") {
+      return notificationForm.scheduledDate;
     }
 
     return new Date();
@@ -930,10 +1032,25 @@ const HomeScreen = () => {
   const renderStoreTimeItem = ({ item }: { item: StoreTimesResponse }) => (
     <View
       style={[
-        styles.storeTimeItem,
+        styles.horizontalStoreTimeItem,
         { backgroundColor: theme.card, borderColor: theme.border },
       ]}
     >
+      <TouchableOpacity
+        style={styles.deleteButton}
+        onPress={() =>
+          showConfirmationAlert(
+            "Delete Store Hours",
+            `Are you sure you want to delete the ${getDayName(
+              item.day_of_week
+            )} store hours?`,
+            () => deleteStoreTime(item.id),
+            "Delete"
+          )
+        }
+      >
+        <Text style={styles.deleteButtonText}>×</Text>
+      </TouchableOpacity>
       <View style={styles.storeTimeInfo}>
         <View style={styles.storeTimeHeader}>
           <Text style={[styles.storeTimeDayText, { color: theme.text }]}>
@@ -950,15 +1067,6 @@ const HomeScreen = () => {
           {item.is_open ? `${item.start_time} - ${item.end_time}` : "Closed"}
         </Text>
       </View>
-      <TouchableOpacity
-        style={[styles.deleteButton, { backgroundColor: "#EF4444" }]}
-        onPress={() => deleteStoreTime(item.id)}
-        disabled={loading}
-      >
-        <Text style={[styles.deleteButtonText, { color: "white" }]}>
-          {loading ? "..." : "×"}
-        </Text>
-      </TouchableOpacity>
     </View>
   );
 
@@ -969,20 +1077,31 @@ const HomeScreen = () => {
   }) => (
     <View
       style={[
-        styles.storeOverrideItem,
-        { backgroundColor: theme.surface, borderColor: "#F59E0B" },
+        styles.horizontalStoreOverrideItem,
+        { backgroundColor: theme.background, borderColor: theme.border },
       ]}
     >
+      <TouchableOpacity
+        style={styles.deleteButton}
+        onPress={() =>
+          showConfirmationAlert(
+            "Delete Override",
+            `Are you sure you want to delete the ${formatOverrideDate(
+              item.month,
+              item.day
+            )} override?`,
+            () => deleteStoreOverride(item.id),
+            "Delete"
+          )
+        }
+      >
+        <Text style={styles.deleteButtonText}>×</Text>
+      </TouchableOpacity>
       <View style={styles.storeTimeInfo}>
         <View style={styles.storeTimeHeader}>
           <Text style={[styles.storeOverrideDateText, { color: theme.text }]}>
             {formatOverrideDate(item.month, item.day)}
           </Text>
-          <View style={[styles.overrideBadge, { backgroundColor: "#F59E0B" }]}>
-            <Text style={[styles.overrideBadgeText, { color: "white" }]}>
-              OVERRIDE
-            </Text>
-          </View>
         </View>
         <View style={styles.storeTimeHeader}>
           <Text style={[styles.storeTimeHours, { color: theme.textSecondary }]}>
@@ -999,15 +1118,6 @@ const HomeScreen = () => {
           />
         </View>
       </View>
-      <TouchableOpacity
-        style={[styles.deleteButton, { backgroundColor: "#EF4444" }]}
-        onPress={() => deleteStoreOverride(item.id)}
-        disabled={loading}
-      >
-        <Text style={[styles.deleteButtonText, { color: "white" }]}>
-          {loading ? "..." : "×"}
-        </Text>
-      </TouchableOpacity>
     </View>
   );
 
@@ -1015,7 +1125,7 @@ const HomeScreen = () => {
     <View
       style={[
         styles.createFormContainer,
-        { backgroundColor: theme.card, borderColor: theme.border },
+        { backgroundColor: theme.background },
       ]}
     >
       <View style={styles.createFormHeader}>
@@ -1024,7 +1134,7 @@ const HomeScreen = () => {
         </Text>
         <TouchableOpacity
           style={[styles.closeFormButton, { backgroundColor: theme.surface }]}
-          onPress={() => setShowCreateForm(null)}
+          onPress={() => setShowStoreTimeModal(false)}
         >
           <Text style={[styles.closeFormButtonText, { color: theme.text }]}>
             ×
@@ -1049,7 +1159,6 @@ const HomeScreen = () => {
                       newStoreTime.day_of_week === day
                         ? theme.primary
                         : theme.surface,
-                    borderColor: theme.border,
                   },
                 ]}
                 onPress={() =>
@@ -1085,7 +1194,6 @@ const HomeScreen = () => {
                   backgroundColor: newStoreTime.is_open
                     ? theme.primary
                     : theme.surface,
-                  borderColor: theme.border,
                 },
               ]}
               onPress={() =>
@@ -1110,7 +1218,6 @@ const HomeScreen = () => {
                   backgroundColor: !newStoreTime.is_open
                     ? theme.primary
                     : theme.surface,
-                  borderColor: theme.border,
                 },
               ]}
               onPress={() =>
@@ -1136,66 +1243,48 @@ const HomeScreen = () => {
         {/* Time Fields (only if open) */}
         {newStoreTime.is_open && (
           <>
-            <View style={styles.formField}>
-              <Text style={[styles.formLabel, { color: theme.text }]}>
-                Start Time
-              </Text>
-              <TouchableOpacity
-                style={[
-                  styles.timeInput,
-                  { backgroundColor: theme.surface, borderColor: theme.border },
-                ]}
-                onPress={() => showPicker("time", "start_time", "storeTime")}
-              >
-                <Text style={[styles.timeInputText, { color: theme.text }]}>
-                  {newStoreTime.start_time}
-                </Text>
-              </TouchableOpacity>
-            </View>
+            <TouchableOpacity
+              onPress={() => showPicker("time", "start_time", "storeTime")}
+            >
+              <Input
+                label="Start Time"
+                value={newStoreTime.start_time}
+                placeholder="Select start time"
+                editable={false}
+                pointerEvents="none"
+              />
+            </TouchableOpacity>
 
-            <View style={styles.formField}>
-              <Text style={[styles.formLabel, { color: theme.text }]}>
-                End Time
-              </Text>
-              <TouchableOpacity
-                style={[
-                  styles.timeInput,
-                  { backgroundColor: theme.surface, borderColor: theme.border },
-                ]}
-                onPress={() => showPicker("time", "end_time", "storeTime")}
-              >
-                <Text style={[styles.timeInputText, { color: theme.text }]}>
-                  {newStoreTime.end_time}
-                </Text>
-              </TouchableOpacity>
-            </View>
+            <TouchableOpacity
+              onPress={() => showPicker("time", "end_time", "storeTime")}
+            >
+              <Input
+                label="End Time"
+                value={newStoreTime.end_time}
+                placeholder="Select end time"
+                editable={false}
+                pointerEvents="none"
+              />
+            </TouchableOpacity>
           </>
         )}
 
         {/* Action Buttons */}
         <View style={styles.formActions}>
-          <TouchableOpacity
-            style={[
-              styles.cancelButton,
-              { backgroundColor: theme.surface, borderColor: theme.border },
-            ]}
-            onPress={() => setShowCreateForm(null)}
+          <Button
+            onPress={() => setShowStoreTimeModal(false)}
+            variant="outline"
+            style={{ flex: 1 }}
           >
-            <Text style={[styles.cancelButtonText, { color: theme.text }]}>
-              Cancel
-            </Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={[styles.createButton, { backgroundColor: theme.primary }]}
+            Cancel
+          </Button>
+          <Button
             onPress={createNewStoreTime}
             disabled={loading}
+            style={{ flex: 1 }}
           >
-            <Text
-              style={[styles.createButtonText, { color: theme.buttonText }]}
-            >
-              {loading ? "Creating..." : "Create"}
-            </Text>
-          </TouchableOpacity>
+            {loading ? "Creating..." : "Create"}
+          </Button>
         </View>
       </View>
     </View>
@@ -1205,7 +1294,7 @@ const HomeScreen = () => {
     <View
       style={[
         styles.createFormContainer,
-        { backgroundColor: theme.card, borderColor: "#F59E0B" },
+        { backgroundColor: theme.background },
       ]}
     >
       <View style={styles.createFormHeader}>
@@ -1214,7 +1303,7 @@ const HomeScreen = () => {
         </Text>
         <TouchableOpacity
           style={[styles.closeFormButton, { backgroundColor: theme.surface }]}
-          onPress={() => setShowCreateForm(null)}
+          onPress={() => setShowOverrideModal(false)}
         >
           <Text style={[styles.closeFormButtonText, { color: theme.text }]}>
             ×
@@ -1224,36 +1313,28 @@ const HomeScreen = () => {
 
       <View style={styles.createFormContent}>
         {/* Month Selection */}
-        <View style={styles.formField}>
-          <Text style={[styles.formLabel, { color: theme.text }]}>Month</Text>
-          <TouchableOpacity
-            style={[
-              styles.timeInput,
-              { backgroundColor: theme.surface, borderColor: theme.border },
-            ]}
-            onPress={() => showPicker("date", "month", "override")}
-          >
-            <Text style={[styles.timeInputText, { color: theme.text }]}>
-              {getMonthName(newOverride.month)}
-            </Text>
-          </TouchableOpacity>
-        </View>
+        <TouchableOpacity
+          onPress={() => showPicker("date", "month", "override")}
+        >
+          <Input
+            label="Month"
+            value={getMonthName(newOverride.month)}
+            placeholder="Select month"
+            editable={false}
+            pointerEvents="none"
+          />
+        </TouchableOpacity>
 
         {/* Day Selection */}
-        <View style={styles.formField}>
-          <Text style={[styles.formLabel, { color: theme.text }]}>Day</Text>
-          <TouchableOpacity
-            style={[
-              styles.timeInput,
-              { backgroundColor: theme.surface, borderColor: theme.border },
-            ]}
-            onPress={() => showPicker("date", "day", "override")}
-          >
-            <Text style={[styles.timeInputText, { color: theme.text }]}>
-              {newOverride.day}
-            </Text>
-          </TouchableOpacity>
-        </View>
+        <TouchableOpacity onPress={() => showPicker("date", "day", "override")}>
+          <Input
+            label="Day"
+            value={newOverride.day.toString()}
+            placeholder="Select day"
+            editable={false}
+            pointerEvents="none"
+          />
+        </TouchableOpacity>
 
         {/* Open/Closed Toggle */}
         <View style={styles.formField}>
@@ -1266,7 +1347,6 @@ const HomeScreen = () => {
                   backgroundColor: newOverride.is_open
                     ? theme.primary
                     : theme.surface,
-                  borderColor: theme.border,
                 },
               ]}
               onPress={() => setNewOverride({ ...newOverride, is_open: true })}
@@ -1289,7 +1369,6 @@ const HomeScreen = () => {
                   backgroundColor: !newOverride.is_open
                     ? theme.primary
                     : theme.surface,
-                  borderColor: theme.border,
                 },
               ]}
               onPress={() => setNewOverride({ ...newOverride, is_open: false })}
@@ -1311,64 +1390,48 @@ const HomeScreen = () => {
         {/* Time Fields (only if open) */}
         {newOverride.is_open && (
           <>
-            <View style={styles.formField}>
-              <Text style={[styles.formLabel, { color: theme.text }]}>
-                Start Time
-              </Text>
-              <TouchableOpacity
-                style={[
-                  styles.timeInput,
-                  { backgroundColor: theme.surface, borderColor: theme.border },
-                ]}
-                onPress={() => showPicker("time", "start_time", "override")}
-              >
-                <Text style={[styles.timeInputText, { color: theme.text }]}>
-                  {newOverride.start_time}
-                </Text>
-              </TouchableOpacity>
-            </View>
+            <TouchableOpacity
+              onPress={() => showPicker("time", "start_time", "override")}
+            >
+              <Input
+                label="Start Time"
+                value={newOverride.start_time}
+                placeholder="Select start time"
+                editable={false}
+                pointerEvents="none"
+              />
+            </TouchableOpacity>
 
-            <View style={styles.formField}>
-              <Text style={[styles.formLabel, { color: theme.text }]}>
-                End Time
-              </Text>
-              <TouchableOpacity
-                style={[
-                  styles.timeInput,
-                  { backgroundColor: theme.surface, borderColor: theme.border },
-                ]}
-                onPress={() => showPicker("time", "end_time", "override")}
-              >
-                <Text style={[styles.timeInputText, { color: theme.text }]}>
-                  {newOverride.end_time}
-                </Text>
-              </TouchableOpacity>
-            </View>
+            <TouchableOpacity
+              onPress={() => showPicker("time", "end_time", "override")}
+            >
+              <Input
+                label="End Time"
+                value={newOverride.end_time}
+                placeholder="Select end time"
+                editable={false}
+                pointerEvents="none"
+              />
+            </TouchableOpacity>
           </>
         )}
 
         {/* Action Buttons */}
         <View style={styles.formActions}>
-          <TouchableOpacity
-            style={[
-              styles.cancelButton,
-              { backgroundColor: theme.surface, borderColor: theme.border },
-            ]}
-            onPress={() => setShowCreateForm(null)}
+          <Button
+            onPress={() => setShowOverrideModal(false)}
+            variant="outline"
+            style={{ flex: 1 }}
           >
-            <Text style={[styles.cancelButtonText, { color: theme.text }]}>
-              Cancel
-            </Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={[styles.createButton, { backgroundColor: "#F59E0B" }]}
+            Cancel
+          </Button>
+          <Button
             onPress={createNewOverride}
             disabled={loading}
+            style={{ flex: 1, backgroundColor: "#F59E0B" }}
           >
-            <Text style={[styles.createButtonText, { color: "white" }]}>
-              {loading ? "Creating..." : "Create Override"}
-            </Text>
-          </TouchableOpacity>
+            {loading ? "Creating..." : "Create Override"}
+          </Button>
         </View>
       </View>
     </View>
@@ -1378,93 +1441,94 @@ const HomeScreen = () => {
     <Screen useSafeArea>
       {/* Header with Time, Timezone Tabber, Plus Button and Exit Button */}
       <View style={styles.header}>
-        <Text style={[styles.headerTime, { color: theme.textSecondary }]}>
-          {getFormattedTime()}
-        </Text>
+        <View>
+          <Text style={[styles.greetingText, { color: theme.text }]}>
+            {getGreetingMessage()}
+          </Text>
+          <Text style={[styles.headerTime, { color: theme.textSecondary }]}>
+            {getFormattedTime()}
+          </Text>
+        </View>
         <View style={styles.headerRight}>
-          <View style={styles.tabberContainer}>
-            <TouchableOpacity
-              style={[
-                styles.tabButton,
-                styles.tabButtonLeft,
-                {
-                  backgroundColor: !useNewYorkTime
-                    ? theme.primary
-                    : theme.surface,
-                  borderColor: theme.border,
-                },
-              ]}
-              onPress={() => setUseNewYorkTime(false)}
-            >
-              <Text
-                style={[
-                  styles.tabButtonText,
-                  {
-                    color: !useNewYorkTime ? theme.buttonText : theme.text,
-                  },
-                ]}
-              >
-                Local
-              </Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={[
-                styles.tabButton,
-                styles.tabButtonRight,
-                {
-                  backgroundColor: useNewYorkTime
-                    ? theme.primary
-                    : theme.surface,
-                  borderColor: theme.border,
-                },
-              ]}
-              onPress={() => setUseNewYorkTime(true)}
-            >
-              <Text
-                style={[
-                  styles.tabButtonText,
-                  {
-                    color: useNewYorkTime ? theme.buttonText : theme.text,
-                  },
-                ]}
-              >
-                NYC
-              </Text>
-            </TouchableOpacity>
-          </View>
-
-          <TouchableOpacity
-            style={[styles.plusButton, { backgroundColor: theme.primary }]}
-            onPress={() => setIsBottomSheetVisible(true)}
-          >
-            <Text style={[styles.plusButtonText, { color: theme.buttonText }]}>
-              +
-            </Text>
-          </TouchableOpacity>
-
           <TouchableOpacity
             style={[styles.exitButton, { backgroundColor: "#EF4444" }]}
-            onPress={logout}
+            onPress={() =>
+              showConfirmationAlert(
+                "Log Out",
+                "Are you sure you want to log out?",
+                logout,
+                "Log Out"
+              )
+            }
           >
-            <Text style={[styles.exitButtonText, { color: "white" }]}>✕</Text>
+            <Text style={[styles.exitButtonText, { color: "white" }]}>
+              Log Out
+            </Text>
           </TouchableOpacity>
         </View>
       </View>
 
-      <ScrollView className="flex-1 p-4">
-        <View>
+      <ScrollView
+        style={styles.container}
+        contentContainerStyle={styles.scrollContent}
+      >
+        <View style={styles.mainContent}>
           {/* Greeting Message */}
           <View style={styles.greetingContainer}>
-            <Text style={[styles.greetingText, { color: theme.text }]}>
-              {getGreetingMessage()}
-            </Text>
+            <View style={styles.tabberContainer}>
+              <TouchableOpacity
+                style={[
+                  styles.tabButton,
+                  styles.tabButtonLeft,
+                  {
+                    backgroundColor: !useNewYorkTime
+                      ? theme.primary
+                      : theme.surface,
+                    borderColor: theme.border,
+                  },
+                ]}
+                onPress={() => setUseNewYorkTime(false)}
+              >
+                <Text
+                  style={[
+                    styles.tabButtonText,
+                    {
+                      color: !useNewYorkTime ? theme.buttonText : theme.text,
+                    },
+                  ]}
+                >
+                  Local
+                </Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[
+                  styles.tabButton,
+                  styles.tabButtonRight,
+                  {
+                    backgroundColor: useNewYorkTime
+                      ? theme.primary
+                      : theme.surface,
+                    borderColor: theme.border,
+                  },
+                ]}
+                onPress={() => setUseNewYorkTime(true)}
+              >
+                <Text
+                  style={[
+                    styles.tabButtonText,
+                    {
+                      color: useNewYorkTime ? theme.buttonText : theme.text,
+                    },
+                  ]}
+                >
+                  NYC
+                </Text>
+              </TouchableOpacity>
+            </View>
           </View>
 
           {/* Store Times and Overrides */}
           <View style={styles.storeTimesSection}>
-            <Text style={[styles.sectionTitle, { color: theme.text }]}>
-              Store Schedule
-            </Text>
             {loading ? (
               <Text
                 style={[styles.loadingText, { color: theme.textSecondary }]}
@@ -1478,73 +1542,103 @@ const HomeScreen = () => {
                 {showCreateForm === "override" && renderCreateOverrideForm()}
 
                 {/* Regular Store Times */}
-                {storeTimes.length > 0 && (
+                {(storeTimes.length > 0 || !isRegularHoursExpanded) && (
                   <View style={styles.subsection}>
-                    <View style={styles.subsectionHeader}>
-                      <Text
-                        style={[styles.subsectionTitle, { color: theme.text }]}
-                      >
-                        Regular Hours
-                      </Text>
-                      <TouchableOpacity
-                        style={[
-                          styles.addButton,
-                          { backgroundColor: theme.primary },
-                        ]}
-                        onPress={() => setShowCreateForm("storeTime")}
-                        disabled={loading || showCreateForm !== null}
-                      >
+                    <TouchableOpacity
+                      style={styles.collapsibleHeader}
+                      onPress={() =>
+                        setIsRegularHoursExpanded(!isRegularHoursExpanded)
+                      }
+                    >
+                      <View style={styles.subsectionHeader}>
                         <Text
                           style={[
-                            styles.addButtonText,
-                            { color: theme.buttonText },
+                            styles.subsectionTitle,
+                            { color: theme.text },
                           ]}
                         >
-                          + Add
+                          Regular Hours ({storeTimes.length})
                         </Text>
-                      </TouchableOpacity>
-                    </View>
-                    <FlatList
-                      data={storeTimes}
-                      renderItem={renderStoreTimeItem}
-                      keyExtractor={(item) => item.id}
-                      scrollEnabled={false}
-                      style={styles.storeTimesList}
-                    />
+                        <View style={styles.headerActions}>
+                          <TouchableOpacity
+                            style={[
+                              styles.addButton,
+                              { backgroundColor: theme.primary },
+                            ]}
+                            onPress={() => setShowStoreTimeModal(true)}
+                          >
+                            <Text
+                              style={[
+                                styles.addButtonText,
+                                { color: theme.buttonText },
+                              ]}
+                            >
+                              + Add
+                            </Text>
+                          </TouchableOpacity>
+                        </View>
+                      </View>
+                    </TouchableOpacity>
+                    {isRegularHoursExpanded && storeTimes.length > 0 && (
+                      <FlatList
+                        data={storeTimes}
+                        renderItem={renderStoreTimeItem}
+                        keyExtractor={(item) => item.id}
+                        horizontal
+                        showsHorizontalScrollIndicator={false}
+                        style={styles.horizontalList}
+                        contentContainerStyle={styles.horizontalListContent}
+                      />
+                    )}
                   </View>
                 )}
 
                 {/* Store Overrides */}
-                {storeOverrides.length > 0 && (
+                {(storeOverrides.length > 0 || !isOverridesExpanded) && (
                   <View style={styles.subsection}>
-                    <View style={styles.subsectionHeader}>
-                      <Text
-                        style={[styles.subsectionTitle, { color: theme.text }]}
-                      >
-                        Special Days & Holidays
-                      </Text>
-                      <TouchableOpacity
-                        style={[
-                          styles.addButton,
-                          { backgroundColor: "#F59E0B" },
-                        ]}
-                        onPress={() => setShowCreateForm("override")}
-                        disabled={loading || showCreateForm !== null}
-                      >
+                    <TouchableOpacity
+                      style={styles.collapsibleHeader}
+                      onPress={() =>
+                        setIsOverridesExpanded(!isOverridesExpanded)
+                      }
+                    >
+                      <View style={styles.subsectionHeader}>
                         <Text
-                          style={[styles.addButtonText, { color: "white" }]}
+                          style={[
+                            styles.subsectionTitle,
+                            { color: theme.text },
+                          ]}
                         >
-                          + Override
+                          Special Days & Holidays ({storeOverrides.length})
                         </Text>
-                      </TouchableOpacity>
-                    </View>
-                    <FlatList
-                      data={storeOverrides}
-                      renderItem={renderStoreOverrideItem}
-                      keyExtractor={(item) => item.id}
-                      scrollEnabled={false}
-                      style={styles.storeTimesList}
-                    />
+                        <View style={styles.headerActions}>
+                          <TouchableOpacity
+                            style={[
+                              styles.addButton,
+                              { backgroundColor: "#F59E0B" },
+                            ]}
+                            onPress={() => setShowOverrideModal(true)}
+                          >
+                            <Text
+                              style={[styles.addButtonText, { color: "white" }]}
+                            >
+                              + Override
+                            </Text>
+                          </TouchableOpacity>
+                        </View>
+                      </View>
+                    </TouchableOpacity>
+                    {isOverridesExpanded && storeOverrides.length > 0 && (
+                      <FlatList
+                        data={storeOverrides}
+                        renderItem={renderStoreOverrideItem}
+                        keyExtractor={(item) => item.id}
+                        horizontal
+                        showsHorizontalScrollIndicator={false}
+                        style={styles.horizontalList}
+                        contentContainerStyle={styles.horizontalListContent}
+                      />
+                    )}
                   </View>
                 )}
 
@@ -1643,6 +1737,96 @@ const HomeScreen = () => {
               </>
             )}
           </View>
+
+          {/* Scheduled Notifications Section */}
+          <View style={styles.notificationsSection}>
+            <View style={styles.sectionHeader}>
+              <Text style={[styles.sectionTitle, { color: theme.text }]}>
+                Scheduled Appointments
+              </Text>
+              <TouchableOpacity
+                style={[styles.addButton, { backgroundColor: theme.primary }]}
+                onPress={() => setIsBottomSheetVisible(true)}
+                disabled={loading}
+              >
+                <Text
+                  style={[styles.addButtonText, { color: theme.buttonText }]}
+                >
+                  + Add
+                </Text>
+              </TouchableOpacity>
+            </View>
+
+            {scheduledNotifications.length > 0 ? (
+              <FlatList
+                data={scheduledNotifications}
+                keyExtractor={(item) => item.id}
+                scrollEnabled={false}
+                renderItem={({ item }) => (
+                  <View
+                    style={[
+                      styles.notificationItem,
+                      {
+                        backgroundColor: theme.card,
+                        borderColor: theme.border,
+                      },
+                    ]}
+                  >
+                    <View style={styles.notificationInfo}>
+                      <Text
+                        style={[
+                          styles.notificationTitle,
+                          { color: theme.text },
+                        ]}
+                      >
+                        {item.title}
+                      </Text>
+                      <Text
+                        style={[
+                          styles.notificationBody,
+                          { color: theme.textSecondary },
+                        ]}
+                      >
+                        {item.body}
+                      </Text>
+                    </View>
+                    <TouchableOpacity
+                      style={[
+                        styles.cancelNotificationButton,
+                        { backgroundColor: "#EF4444" },
+                      ]}
+                      onPress={() =>
+                        showConfirmationAlert(
+                          "Cancel Notification",
+                          "Are you sure you want to cancel this scheduled notification?",
+                          () => handleCancelNotification(item),
+                          "Delete"
+                        )
+                      }
+                      disabled={loading}
+                    >
+                      <Text
+                        style={[
+                          styles.cancelNotificationButtonText,
+                          { color: "white" },
+                        ]}
+                      >
+                        {loading ? "..." : "Remove"}
+                      </Text>
+                    </TouchableOpacity>
+                  </View>
+                )}
+              />
+            ) : (
+              <View style={styles.emptyNotificationsContainer}>
+                <Text
+                  style={[styles.emptyText, { color: theme.textSecondary }]}
+                >
+                  No scheduled notifications
+                </Text>
+              </View>
+            )}
+          </View>
         </View>
       </ScrollView>
 
@@ -1707,8 +1891,7 @@ const HomeScreen = () => {
                       { color: theme.text },
                     ]}
                   >
-                    Time Slots ({useNewYorkTime ? "NYC" : "Local"} Time) -{" "}
-                    {selectedDate.formattedDate}
+                    Time Slots (NYC Time) - {selectedDate.formattedDate}
                   </Text>
                   {loading ? (
                     <Text
@@ -1809,13 +1992,79 @@ const HomeScreen = () => {
                         styles.confirmButton,
                         { backgroundColor: theme.primary },
                       ]}
-                      onPress={() => {
-                        console.log("Confirming appointment:", {
-                          date: selectedDate.formattedDate,
-                          time: selectedTimeSlot.time,
-                        });
-                        setIsBottomSheetVisible(false);
-                        // Here you could navigate to a confirmation screen or save to backend
+                      onPress={async () => {
+                        if (selectedDate && selectedTimeSlot) {
+                          // Create appointment date in NYC timezone
+                          const [hours, minutes] = selectedTimeSlot.time
+                            .split(":")
+                            .map(Number);
+
+                          // Create a date object for the appointment in NYC time
+                          const appointmentDateNYC = new Date(
+                            selectedDate.date
+                          );
+                          appointmentDateNYC.setHours(hours, minutes, 0, 0);
+
+                          // Convert NYC time to local timezone using date-fns-tz
+                          const nycTimeZone = "America/New_York";
+                          const localTimeZone =
+                            Intl.DateTimeFormat().resolvedOptions().timeZone;
+
+                          // This represents the same moment in time but in the local timezone
+                          const appointmentInLocal = fromZonedTime(
+                            appointmentDateNYC,
+                            nycTimeZone
+                          );
+
+                          // Schedule notification 15 minutes before appointment (in local time)
+                          const notificationTime = new Date(
+                            appointmentInLocal.getTime() - 15 * 60 * 1000
+                          );
+
+                          // Format local time for display
+                          const localTimeString = format(
+                            appointmentInLocal,
+                            "HH:mm"
+                          );
+
+                          if (notificationTime > new Date()) {
+                            const notificationId =
+                              await scheduleNotificationAtTime(
+                                "Appointment Reminder",
+                                `You have an appointment scheduled at ${selectedTimeSlot.time} NYC time (${localTimeString} local time) on ${selectedDate.formattedDate}`,
+                                notificationTime
+                              );
+
+                            if (notificationId) {
+                              const newNotification: ScheduledNotification = {
+                                id: Date.now().toString(),
+                                title: "Appointment Reminder",
+                                body: `You have an appointment scheduled at ${selectedTimeSlot.time} NYC time (${localTimeString} local time) on ${selectedDate.formattedDate}`,
+                                scheduledDate: notificationTime
+                                  .toISOString()
+                                  .split("T")[0],
+                                scheduledTime: notificationTime
+                                  .toTimeString()
+                                  .slice(0, 5),
+                                notificationId: notificationId,
+                                createdAt: new Date().toISOString(),
+                              };
+
+                              saveScheduledNotification(newNotification);
+                              loadScheduledNotifications();
+                            }
+                          }
+
+                          console.log("Confirming appointment:", {
+                            date: selectedDate.formattedDate,
+                            nycTime: selectedTimeSlot.time,
+                            localTime: localTimeString,
+                          });
+                          setIsBottomSheetVisible(false);
+                          alert(
+                            `Appointment confirmed!\nNYC Time: ${selectedTimeSlot.time}\nLocal Time: ${localTimeString}\nNotification scheduled for 15 minutes before.`
+                          );
+                        }
                       }}
                     >
                       <Text
@@ -1837,20 +2086,116 @@ const HomeScreen = () => {
 
       {/* Date/Time Picker */}
       {showDateTimePicker && (
-        <DateTimePicker
-          value={getPickerValue()}
-          mode={showDateTimePicker.type}
-          display="spinner"
-          themeVariant="light"
-          style={{ backgroundColor: "white" }}
-          onChange={handleDateTimePickerChange}
-        />
+        <View style={styles.dateTimePickerOverlay}>
+          <View style={styles.dateTimePickerContainer}>
+            <DateTimePicker
+              value={getPickerValue()}
+              mode={
+                showDateTimePicker.formType === "notification"
+                  ? "datetime"
+                  : showDateTimePicker.type
+              }
+              display="spinner"
+              themeVariant="light"
+              style={styles.dateTimePicker}
+              onChange={handleDateTimePickerChange}
+            />
+            <View style={styles.dateTimePickerActions}>
+              <TouchableOpacity
+                style={[
+                  styles.dateTimePickerButton,
+                  { backgroundColor: theme.surface, borderColor: theme.border },
+                ]}
+                onPress={() => setShowDateTimePicker(null)}
+              >
+                <Text
+                  style={[
+                    styles.dateTimePickerButtonText,
+                    { color: theme.text },
+                  ]}
+                >
+                  Cancel
+                </Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[
+                  styles.dateTimePickerButton,
+                  { backgroundColor: theme.primary },
+                ]}
+                onPress={() => setShowDateTimePicker(null)}
+              >
+                <Text
+                  style={[
+                    styles.dateTimePickerButtonText,
+                    { color: theme.buttonText },
+                  ]}
+                >
+                  Done
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
       )}
+
+      {/* Store Time Form */}
+      {showStoreTimeModal && (
+        <View style={styles.modalOverlay}>
+          <View
+            style={[styles.modalContent, { backgroundColor: theme.background }]}
+          >
+            {renderCreateStoreTimeForm()}
+          </View>
+        </View>
+      )}
+
+      {/* Store Override Form */}
+      {showOverrideModal && (
+        <View style={styles.modalOverlay}>
+          <View
+            style={[styles.modalContent, { backgroundColor: theme.background }]}
+          >
+            {renderCreateOverrideForm()}
+          </View>
+        </View>
+      )}
+
+      {/* Custom Alert Component */}
+      <CustomAlert
+        visible={alertConfig.visible}
+        title={alertConfig.title}
+        message={alertConfig.message}
+        buttons={[
+          {
+            text: "Cancel",
+            onPress: hideAlert,
+            variant: "default",
+          },
+          {
+            text: alertConfig.confirmText || "Confirm",
+            onPress: () => {
+              alertConfig.onConfirm();
+              hideAlert();
+            },
+            variant: "destructive",
+          },
+        ]}
+        onClose={hideAlert}
+      />
     </Screen>
   );
 };
 
 const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+  },
+  scrollContent: {
+    flexGrow: 1,
+  },
+  mainContent: {
+    paddingBottom: 32,
+  },
   header: {
     flexDirection: "row",
     justifyContent: "space-between",
@@ -1897,21 +2242,9 @@ const styles = StyleSheet.create({
     fontSize: 11,
     fontWeight: "600",
   },
-  plusButton: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  plusButtonText: {
-    fontSize: 18,
-    fontWeight: "bold",
-  },
   exitButton: {
-    width: 32,
-    height: 32,
     borderRadius: 16,
+    padding: 8,
     justifyContent: "center",
     alignItems: "center",
   },
@@ -1919,9 +2252,82 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: "bold",
   },
+  collapsibleHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    paddingHorizontal: 12,
+    borderRadius: 12,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  headerActions: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+  },
+  horizontalList: {},
+  horizontalListContent: {
+    paddingHorizontal: 16,
+  },
+  horizontalStoreTimeItem: {
+    flexDirection: "column",
+    alignItems: "flex-start",
+    padding: 16,
+    borderRadius: 12,
+    borderWidth: 1,
+    minWidth: 180,
+    marginRight: 12,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
+    position: "relative",
+  },
+  horizontalStoreOverrideItem: {
+    flexDirection: "column",
+    alignItems: "flex-start",
+    padding: 16,
+    borderRadius: 12,
+    borderWidth: 2,
+    minWidth: 200,
+    marginRight: 12,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
+    position: "relative",
+  },
+  deleteButton: {
+    position: "absolute",
+    top: 8,
+    right: 8,
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    justifyContent: "center",
+    alignItems: "center",
+    zIndex: 1,
+  },
+  deleteButtonText: {
+    color: "grey",
+    fontSize: 16,
+    fontWeight: "bold",
+    lineHeight: 16,
+  },
   modalOverlay: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
     flex: 1,
-    justifyContent: "flex-end",
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    zIndex: 1000,
   },
   modalBackground: {
     flex: 1,
@@ -1931,6 +2337,13 @@ const styles = StyleSheet.create({
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
     height: Dimensions.get("window").height * 0.9,
+  },
+  modalContent: {
+    backgroundColor: "white",
+    borderRadius: 20,
+    maxWidth: "95%",
+    maxHeight: "90%",
+    width: "100%",
   },
   bottomSheetHeader: {
     flexDirection: "row",
@@ -2133,35 +2546,26 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   greetingContainer: {
-    paddingVertical: 20,
-    paddingHorizontal: 16,
+    flexDirection: "row",
+    flex: 1,
+    justifyContent: "flex-end",
     alignItems: "center",
     marginBottom: 20,
+    paddingHorizontal: 16,
+    paddingTop: 16,
   },
   greetingText: {
-    fontSize: 20,
-    fontWeight: "600",
-    textAlign: "center",
+    fontSize: 22,
+    fontWeight: "700",
+    textAlign: "left",
+    letterSpacing: 0.5,
   },
-  storeTimesSection: {
-    marginBottom: 24,
-    paddingHorizontal: 16,
-  },
+  storeTimesSection: {},
   sectionTitle: {
-    fontSize: 18,
-    fontWeight: "600",
-    marginBottom: 16,
+    fontSize: 20,
+    fontWeight: "700",
     textAlign: "center",
-  },
-  storeTimesList: {},
-  storeTimeItem: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    padding: 16,
-    marginBottom: 8,
-    borderRadius: 8,
-    borderWidth: 1,
+    letterSpacing: 0.5,
   },
   storeTimeInfo: {
     flex: 1,
@@ -2185,18 +2589,6 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: "400",
   },
-  deleteButton: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
-    justifyContent: "center",
-    alignItems: "center",
-    marginLeft: 12,
-  },
-  deleteButtonText: {
-    fontSize: 16,
-    fontWeight: "bold",
-  },
   emptyText: {
     textAlign: "center",
     fontSize: 14,
@@ -2204,42 +2596,24 @@ const styles = StyleSheet.create({
     paddingVertical: 20,
   },
   subsection: {
-    marginBottom: 20,
+    marginBottom: 12,
   },
   subsectionTitle: {
-    fontSize: 16,
-    fontWeight: "600",
-    marginBottom: 12,
-    color: "#666",
-  },
-  storeOverrideItem: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    padding: 16,
-    marginBottom: 8,
-    borderRadius: 8,
-    borderWidth: 2,
+    fontSize: 18,
+    fontWeight: "700",
+    color: "#333",
+    letterSpacing: 0.3,
   },
   storeOverrideDateText: {
     fontSize: 16,
     fontWeight: "600",
     marginRight: 8,
   },
-  overrideBadge: {
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    borderRadius: 4,
-  },
-  overrideBadgeText: {
-    fontSize: 10,
-    fontWeight: "bold",
-    textTransform: "uppercase",
-  },
   subsectionHeader: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
+    flex: 1,
     marginBottom: 12,
   },
   addButton: {
@@ -2285,9 +2659,12 @@ const styles = StyleSheet.create({
   },
   createFormContainer: {
     marginBottom: 20,
-    borderRadius: 8,
-    borderWidth: 2,
-    padding: 16,
+    borderRadius: 16,
+    padding: 24,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 4,
   },
   createFormHeader: {
     flexDirection: "row",
@@ -2326,12 +2703,15 @@ const styles = StyleSheet.create({
     flexWrap: "wrap",
   },
   dayButton: {
-    paddingHorizontal: 8,
-    paddingVertical: 6,
-    borderRadius: 6,
-    borderWidth: 1,
-    minWidth: 40,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 8,
+    minWidth: 45,
     alignItems: "center",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 3,
+    elevation: 2,
   },
   dayButtonText: {
     fontSize: 12,
@@ -2343,49 +2723,119 @@ const styles = StyleSheet.create({
   },
   toggleButton: {
     flex: 1,
-    paddingVertical: 8,
-    borderRadius: 6,
-    borderWidth: 1,
+    paddingVertical: 10,
+    borderRadius: 8,
     alignItems: "center",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 3,
+    elevation: 2,
   },
   toggleButtonText: {
     fontSize: 14,
     fontWeight: "600",
-  },
-  timeInput: {
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: 6,
-    borderWidth: 1,
-  },
-  timeInputText: {
-    fontSize: 16,
-    fontWeight: "500",
   },
   formActions: {
     flexDirection: "row",
     gap: 12,
     marginTop: 8,
   },
-  cancelButton: {
+  // Notification Styles
+  notificationsSection: {
+    marginBottom: 24,
+    paddingHorizontal: 16,
+  },
+  sectionHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 16,
+  },
+  notificationItem: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    padding: 16,
+    marginBottom: 8,
+    borderRadius: 8,
+    borderWidth: 1,
+  },
+  notificationInfo: {
     flex: 1,
-    paddingVertical: 10,
+    marginRight: 12,
+  },
+  notificationTitle: {
+    fontSize: 16,
+    fontWeight: "600",
+    marginBottom: 4,
+  },
+  notificationBody: {
+    fontSize: 14,
+    marginBottom: 4,
+  },
+  notificationTime: {
+    fontSize: 12,
+    fontStyle: "italic",
+  },
+  cancelNotificationButton: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
     borderRadius: 6,
+    minWidth: 70,
+    alignItems: "center",
+  },
+  cancelNotificationButtonText: {
+    fontSize: 12,
+    fontWeight: "600",
+  },
+  emptyNotificationsContainer: {
+    alignItems: "center",
+    paddingVertical: 32,
+  },
+  dateTimePickerOverlay: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    justifyContent: "center",
+    alignItems: "center",
+    zIndex: 10000,
+    elevation: 10000,
+  },
+  dateTimePickerContainer: {
+    backgroundColor: "white",
+    borderRadius: 16,
+    padding: 20,
+    margin: 20,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 8,
+    maxWidth: 350,
+    width: "90%",
+  },
+  dateTimePicker: {
+    backgroundColor: "white",
+    borderRadius: 8,
+  },
+  dateTimePickerActions: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginTop: 20,
+    gap: 12,
+  },
+  dateTimePickerButton: {
+    flex: 1,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: 8,
     borderWidth: 1,
     alignItems: "center",
   },
-  cancelButtonText: {
-    fontSize: 14,
-    fontWeight: "600",
-  },
-  createButton: {
-    flex: 1,
-    paddingVertical: 10,
-    borderRadius: 6,
-    alignItems: "center",
-  },
-  createButtonText: {
-    fontSize: 14,
+  dateTimePickerButtonText: {
+    fontSize: 16,
     fontWeight: "600",
   },
 });

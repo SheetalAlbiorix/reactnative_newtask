@@ -13,37 +13,42 @@ import { Ionicons } from "@expo/vector-icons";
 import { isEmpty } from "@/utils/Helper";
 import UseLogin from "@/hooks/useLogin";
 import Strings from "@/utils/Strings";
-import Color from "@/utils/Color";
+import { useTheme } from "@/utils/ThemeContext";
 
 const LoginScreen = () => {
   const [email, setEmail] = useState("user@tryperdiem.com");
   const [password, setPassword] = useState("password");
   const [showPassword, setShowPassword] = useState(false);
   const { loginWithGoogle, loginWithEmail } = UseLogin();
-
+  const { theme } = useTheme();
   return (
-    <Screen useSafeArea>
-      <View style={styles.container}>
-        <Text style={styles.title}>Login</Text>
+    <Screen useSafeArea style={{ backgroundColor: theme.background }}>
+      <View style={[styles.container, { backgroundColor: theme.background }]}>
+        <Text style={[styles.title, { color: theme.primary }]}>Login</Text>
 
         {/* Email Field */}
         <TextInput
           placeholder="Email"
-          style={styles.input}
+          style={[
+            styles.input,
+            { borderColor: theme.primary, color: theme.text },
+          ]}
           keyboardType="email-address"
           autoCapitalize="none"
-          placeholderTextColor={Color.gray}
+          placeholderTextColor={theme.placeholder}
           value={email}
           onChangeText={setEmail}
         />
 
         {/* Password Field */}
-        <View style={styles.passwordContainer}>
+        <View
+          style={[styles.passwordContainer, { borderColor: theme.primary }]}
+        >
           <TextInput
             placeholder="Password"
-            style={styles.passwordInput}
+            style={[styles.passwordInput, { color: theme.text }]}
             secureTextEntry={!showPassword}
-            placeholderTextColor={Color.gray}
+            placeholderTextColor={theme.placeholder}
             autoCapitalize="none"
             value={password}
             onChangeText={setPassword}
@@ -55,7 +60,7 @@ const LoginScreen = () => {
             <Ionicons
               name={showPassword ? "eye-off" : "eye"}
               size={20}
-              color={Color.gray}
+              color={theme.placeholder}
             />
           </TouchableOpacity>
         </View>
@@ -64,7 +69,7 @@ const LoginScreen = () => {
         <Button
           variant="primary"
           onPress={() => loginWithEmail(email, password)}
-          style={styles.button}
+          style={[styles.button, { backgroundColor: theme.primary }]}
           disabled={isEmpty(email) || isEmpty(password)}
         >
           {Strings.login}
@@ -72,23 +77,29 @@ const LoginScreen = () => {
 
         {/* Separator */}
         <View style={styles.separatorContainer}>
-          <View style={styles.separatorLine} />
-          <Text style={styles.separatorText}>{Strings.or}</Text>
-          <View style={styles.separatorLine} />
+          <View
+            style={[styles.separatorLine, { backgroundColor: theme.divider }]}
+          />
+          <Text style={[styles.separatorText, { color: theme.textSecondary }]}>
+            {Strings.or}
+          </Text>
+          <View
+            style={[styles.separatorLine, { backgroundColor: theme.divider }]}
+          />
         </View>
 
         {/* Google Login Button */}
         <Button
           variant="outline"
           onPress={() => loginWithGoogle()}
-          style={styles.googleButton}
+          style={[styles.googleButton, { borderColor: theme.primary }]}
         >
           <Image
             source={require("../../assets/images/google-logo.png")}
             style={styles.googleIcon}
           />
           <View style={styles.googleButtonContainer}>
-            <Text style={styles.googleButtonText}>
+            <Text style={[styles.googleButtonText, { color: theme.primary }]}>
               {Strings.loginWithGoogle}
             </Text>
           </View>
@@ -103,29 +114,24 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: "center",
     padding: 16,
-    backgroundColor: Color.white,
   },
   title: {
     fontSize: 24,
     fontWeight: "bold",
     marginBottom: 24,
     textAlign: "center",
-    color: Color.blue,
   },
   input: {
     height: 48,
     borderWidth: 1,
-    borderColor: Color.blue,
     borderRadius: 8,
     paddingHorizontal: 12,
     marginBottom: 12,
-    color: Color.black,
   },
   passwordContainer: {
     flexDirection: "row",
     alignItems: "center",
     borderWidth: 1,
-    borderColor: Color.blue,
     borderRadius: 8,
     paddingHorizontal: 12,
     marginBottom: 16,
@@ -133,14 +139,12 @@ const styles = StyleSheet.create({
   passwordInput: {
     flex: 1,
     height: 48,
-    color: Color.black,
   },
   eyeIcon: {
     padding: 4,
   },
   button: {
     marginTop: 8,
-    backgroundColor: Color.blue,
   },
   separatorContainer: {
     flexDirection: "row",
@@ -150,21 +154,17 @@ const styles = StyleSheet.create({
   separatorLine: {
     flex: 1,
     height: 1,
-    backgroundColor: Color.lightGrey,
   },
   separatorText: {
     marginHorizontal: 12,
-    color: Color.gray,
     fontSize: 14,
   },
   googleButton: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    borderColor: Color.blue,
   },
   googleButtonText: {
-    color: Color.blue,
     fontSize: 17,
     fontWeight: "500",
   },

@@ -6,6 +6,7 @@ import React, {
   useEffect,
 } from "react";
 import { StorageKey, StorageUtils } from "./Storage";
+import { useColorScheme } from "react-native";
 
 interface ThemeColors {
   primary: string;
@@ -112,7 +113,7 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
     return StorageUtils.get(StorageKey.APP_THEME);
   });
 
-  const theme = isDarkMode ? darkTheme : lightTheme; // Use this line
+  const theme = useColorScheme() == "dark" ? darkTheme : lightTheme; // Use this line
 
   // Toggle theme and save preference to storage
   const toggleTheme = (): void => {

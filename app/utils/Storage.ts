@@ -4,6 +4,7 @@ import { MMKV } from "react-native-mmkv";
 export const enum StorageKey {
   AUTH_STATE = "auth_state",
   APP_THEME = "app_theme",
+  SCHEDULED_APPOINTMENTS = "scheduled_notifications",
 }
 
 // Initialize storage
