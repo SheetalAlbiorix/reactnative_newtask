@@ -6,14 +6,12 @@ import Strings from "@/utils/Strings";
 import { useLoginForm } from "@/hooks/useLoginForm";
 
 // Modular components
-import {
-  LoginHeader,
-  EmailInput,
-  PasswordInput,
-  LoginButton,
-  LoginSeparator,
-  GoogleLoginButton,
-} from "@/components/login";
+import LoginHeader from "@/components/login/LoginHeader";
+import EmailInput from "@/components/login/EmailInput";
+import PasswordInput from "@/components/login/PasswordInput";
+import LoginButton from "@/components/login/LoginButton";
+import LoginSeparator from "@/components/login/LoginSeparator";
+import GoogleLoginButton from "@/components/login/GoogleLoginButton";
 
 const LoginScreen = () => {
   const { theme } = useTheme();
