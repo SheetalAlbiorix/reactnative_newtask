@@ -67,6 +67,7 @@ const HomeScreen = () => {
     field: "start_time" | "end_time" | "month" | "day" | "scheduledDate";
     formType: "storeTime" | "override" | "notification";
   } | null>(null);
+  const [tempPickerValue, setTempPickerValue] = useState<Date>(new Date());
   const [newStoreTime, setNewStoreTime] = useState({
     day_of_week: 0,
     start_time: "09:00",
@@ -340,7 +341,14 @@ const HomeScreen = () => {
 
   // Handle date/time picker change
   const handleDateTimePickerChange = (event: any, selectedValue?: Date) => {
-    if (!showDateTimePicker || !selectedValue) {
+    if (selectedValue) {
+      setTempPickerValue(selectedValue);
+    }
+  };
+
+  // Handle date/time picker done button
+  const handleDateTimePickerDone = () => {
+    if (!showDateTimePicker) {
       setShowDateTimePicker(null);
       return;
     }
@@ -349,7 +357,7 @@ const HomeScreen = () => {
 
     if (formType === "storeTime") {
       if (type === "time") {
-        const timeString = selectedValue.toTimeString().slice(0, 5);
+        const timeString = tempPickerValue.toTimeString().slice(0, 5);
         setNewStoreTime((prev) => ({
           ...prev,
           [field]: timeString,
@@ -357,7 +365,7 @@ const HomeScreen = () => {
       }
     } else if (formType === "override") {
       if (type === "time") {
-        const timeString = selectedValue.toTimeString().slice(0, 5);
+        const timeString = tempPickerValue.toTimeString().slice(0, 5);
         setNewOverride((prev) => ({
           ...prev,
           [field]: timeString,
@@ -366,12 +374,12 @@ const HomeScreen = () => {
         if (field === "month") {
           setNewOverride((prev) => ({
             ...prev,
-            month: selectedValue.getMonth() + 1,
+            month: tempPickerValue.getMonth() + 1,
           }));
         } else if (field === "day") {
           setNewOverride((prev) => ({
             ...prev,
-            day: selectedValue.getDate(),
+            day: tempPickerValue.getDate(),
           }));
         }
       }
@@ -387,6 +395,8 @@ const HomeScreen = () => {
     formType: "storeTime" | "override" | "notification"
   ) => {
     setShowDateTimePicker({ type, field, formType });
+    // Initialize temp value with current value
+    setTempPickerValue(getPickerValue());
   };
 
   // Get current date/time value for picker
@@ -911,7 +921,7 @@ const HomeScreen = () => {
         <View style={styles.dateTimePickerOverlay}>
           <View style={styles.dateTimePickerContainer}>
             <DateTimePicker
-              value={getPickerValue()}
+              value={tempPickerValue}
               mode={showDateTimePicker.type}
               display="spinner"
               themeVariant="light"
@@ -940,7 +950,7 @@ const HomeScreen = () => {
                   styles.dateTimePickerButton,
                   { backgroundColor: theme.primary },
                 ]}
-                onPress={() => setShowDateTimePicker(null)}
+                onPress={handleDateTimePickerDone}
               >
                 <Text
                   style={[
@@ -1095,10 +1105,6 @@ const styles = StyleSheet.create({
     marginBottom: 20,
     borderRadius: 16,
     padding: 24,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 4,
   },
   createFormHeader: {
     flexDirection: "row",
@@ -1183,7 +1189,6 @@ const styles = StyleSheet.create({
     backgroundColor: "rgba(0, 0, 0, 0.5)",
     justifyContent: "center",
     alignItems: "center",
-    zIndex: 10000,
   },
   modalContent: {
     backgroundColor: "white",
@@ -1201,8 +1206,7 @@ const styles = StyleSheet.create({
     backgroundColor: "rgba(0, 0, 0, 0.5)",
     justifyContent: "center",
     alignItems: "center",
-    zIndex: 10000,
-    elevation: 10000,
+    zIndex: 20000,
   },
   dateTimePickerContainer: {
     backgroundColor: "white",
