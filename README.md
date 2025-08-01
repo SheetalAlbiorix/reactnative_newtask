@@ -110,6 +110,26 @@ app/
 - **Google Sign-In**
 - **Expo Notifications**
 
+
+## 🎯 Assumptions
+
+1. **Authentication**: The app assumes users will primarily authenticate via email/password or Google Sign-In
+2. **Network**: Requires internet connectivity for authentication and store management features
+3. **Platform Support**: Optimized for iOS and Android (web support available but limited)
+4. **Storage**: Uses MMKV for secure, persistent storage on device
+5. **Notifications**: Configured for push notifications with sound and custom icons
+6. **Theme**: Automatically detects and respects system theme preferences
+
+## ⚠️ Limitations
+
+1. **Offline Functionality**: Limited offline capabilities - authentication and store operations require network connectivity
+2. **Web Platform**: Web support is available but may have limited functionality compared to native platforms
+3. **Google Services**: Requires proper Google Services configuration for Google Sign-In to work
+4. **Development Client**: Uses Expo development builds, which require additional setup for certain native features
+5. **Push Notifications**: Notification functionality requires proper configuration of APNs (iOS) and FCM (Android)
+6. **Environment Variables**: Some features depend on proper environment variable configuration
+
+
 ## 🏗️ Development Approach
 
 ### Architecture Decisions
