@@ -36,6 +36,16 @@ const config: ExpoConfig = {
           "com.googleusercontent.apps.1045753182166-lafiec0m92d4rk79bc0qkheuah52s7to",
       },
     ],
+    [
+      "expo-notifications",
+      {
+        icon: "./assets/branding/notification_icon.png",
+        color: "#ffffff",
+        defaultChannel: "default",
+        sounds: ["./assets/sound/notification_sound.wav"],
+        enableBackgroundRemoteNotifications: false,
+      },
+    ],
   ],
 };
 

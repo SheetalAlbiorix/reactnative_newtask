@@ -20,6 +20,7 @@ import {
   getStoreTimes,
   getStoreTimesByDay,
 } from "@/network/api/requests/store-times";
+import { NotificationsAlert } from "@/utils/Notifications";
 
 // Import the interface, or define it locally if not exported
 
@@ -64,10 +65,13 @@ const HomeScreen = () => {
   );
   const [isBottomSheetVisible, setIsBottomSheetVisible] = useState(false);
 
+  const { scheduleNotification } = NotificationsAlert();
+
   // Update time every second
   useEffect(() => {
     const timer = setInterval(() => {
       setCurrentTime(new Date());
+      // scheduleNotification("Hello!!", "Welcome to App");
     }, 1000);
 
     return () => clearInterval(timer);

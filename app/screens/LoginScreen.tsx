@@ -5,6 +5,7 @@ import {
   TextInput,
   StyleSheet,
   TouchableOpacity,
+  Image,
 } from "react-native";
 import Button from "@/components/Button";
 import Screen from "@/components/Screen";
@@ -31,6 +32,7 @@ const LoginScreen = () => {
           style={styles.input}
           keyboardType="email-address"
           autoCapitalize="none"
+          placeholderTextColor={Color.gray}
           value={email}
           onChangeText={setEmail}
         />
@@ -41,6 +43,7 @@ const LoginScreen = () => {
             placeholder="Password"
             style={styles.passwordInput}
             secureTextEntry={!showPassword}
+            placeholderTextColor={Color.gray}
             autoCapitalize="none"
             value={password}
             onChangeText={setPassword}
@@ -80,11 +83,15 @@ const LoginScreen = () => {
           onPress={() => loginWithGoogle()}
           style={styles.googleButton}
         >
-          <Ionicons name="logo-google" size={20} color={Color.red} />
-          <Text style={styles.googleButtonText}>
-            {" "}
-            {Strings.loginWithGoogle}
-          </Text>
+          <Image
+            source={require("../../assets/images/google-logo.png")}
+            style={styles.googleIcon}
+          />
+          <View style={styles.googleButtonContainer}>
+            <Text style={styles.googleButtonText}>
+              {Strings.loginWithGoogle}
+            </Text>
+          </View>
         </Button>
       </View>
     </Screen>
@@ -103,20 +110,22 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     marginBottom: 24,
     textAlign: "center",
+    color: Color.blue,
   },
   input: {
     height: 48,
     borderWidth: 1,
-    borderColor: Color.lightGrey,
+    borderColor: Color.blue,
     borderRadius: 8,
     paddingHorizontal: 12,
     marginBottom: 12,
+    color: Color.black,
   },
   passwordContainer: {
     flexDirection: "row",
     alignItems: "center",
     borderWidth: 1,
-    borderColor: Color.lightGrey,
+    borderColor: Color.blue,
     borderRadius: 8,
     paddingHorizontal: 12,
     marginBottom: 16,
@@ -124,12 +133,14 @@ const styles = StyleSheet.create({
   passwordInput: {
     flex: 1,
     height: 48,
+    color: Color.black,
   },
   eyeIcon: {
     padding: 4,
   },
   button: {
     marginTop: 8,
+    backgroundColor: Color.blue,
   },
   separatorContainer: {
     flexDirection: "row",
@@ -150,12 +161,22 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    borderColor: Color.red,
+    borderColor: Color.blue,
   },
   googleButtonText: {
-    color: Color.red,
-    fontSize: 16,
+    color: Color.blue,
+    fontSize: 17,
     fontWeight: "500",
+  },
+  googleButtonContainer: {
+    alignItems: "center",
+    justifyContent: "center",
+    height: 24,
+    paddingLeft: 10,
+  },
+  googleIcon: {
+    width: 24,
+    height: 24,
   },
 });
 
