@@ -31,9 +31,6 @@ const UseLogin = () => {
     []
   );
 
-  /**
-   * Handles Google Sign-In
-   */
   const loginWithGoogle = async () => {
     try {
       await GoogleSignin.hasPlayServices();
