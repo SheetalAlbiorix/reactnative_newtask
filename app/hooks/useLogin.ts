@@ -56,12 +56,6 @@ const UseLogin = () => {
     }
   };
 
-  /**
-   *
-   * @param email
-   * @param password
-   * @returns
-   */
   const loginWithEmail = (email: string, password: string) => {
     if (!isValidEmail(email)) {
       Alert.alert(Strings.invalidEmail);
