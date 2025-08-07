@@ -6,12 +6,16 @@ import { SafeAreaProvider } from "react-native-safe-area-context";
 import { AuthProvider } from "@/utils/AuthContext";
 import { useCustomFonts } from "@/utils/fonts";
 import { AppProvider } from "@/utils/AppContext";
+import { LogBox } from "react-native";
 
 export default function App() {
   const fontsLoaded = useCustomFonts();
   if (!fontsLoaded) {
     return null;
   }
+
+  LogBox.ignoreAllLogs(true);
+
   return (
     <AppProvider>
       <AuthProvider>

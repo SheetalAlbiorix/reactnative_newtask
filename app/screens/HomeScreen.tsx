@@ -450,7 +450,7 @@ const HomeScreen = () => {
     >
       <View style={styles.createFormHeader}>
         <Text style={[styles.createFormTitle, { color: theme.text }]}>
-          Add Regular Store Hours
+          {Strings.addRegularStoreHours}
         </Text>
         <TouchableOpacity
           style={[styles.closeFormButton, { backgroundColor: theme.surface }]}
@@ -505,7 +505,9 @@ const HomeScreen = () => {
 
         {/* Status Toggle */}
         <View style={styles.formField}>
-          <Text style={[styles.formLabel, { color: theme.text }]}>Status</Text>
+          <Text style={[styles.formLabel, { color: theme.text }]}>
+            {Strings.status}
+          </Text>
           <View style={styles.toggleContainer}>
             <TouchableOpacity
               style={[
@@ -528,7 +530,7 @@ const HomeScreen = () => {
                   },
                 ]}
               >
-                Open
+                {Strings.open}
               </Text>
             </TouchableOpacity>
             <TouchableOpacity
@@ -554,7 +556,7 @@ const HomeScreen = () => {
                   },
                 ]}
               >
-                Closed
+                {Strings.closed}
               </Text>
             </TouchableOpacity>
           </View>
@@ -567,9 +569,9 @@ const HomeScreen = () => {
               onPress={() => showPicker("time", "start_time", "storeTime")}
             >
               <Input
-                label="Start Time"
+                label={Strings.startTime}
                 value={newStoreTime.start_time}
-                placeholder="Select start time"
+                placeholder={Strings.selectStartTime}
                 editable={false}
                 pointerEvents="none"
               />
@@ -579,9 +581,9 @@ const HomeScreen = () => {
               onPress={() => showPicker("time", "end_time", "storeTime")}
             >
               <Input
-                label="End Time"
+                label={Strings.endTime}
                 value={newStoreTime.end_time}
-                placeholder="Select end time"
+                placeholder={Strings.selectEndTime}
                 editable={false}
                 pointerEvents="none"
               />
@@ -603,7 +605,7 @@ const HomeScreen = () => {
             disabled={loading}
             style={{ flex: 1 }}
           >
-            {loading ? "Creating..." : "Create"}
+            {loading ? Strings.creating : Strings.create}
           </Button>
         </View>
       </View>
@@ -620,7 +622,7 @@ const HomeScreen = () => {
     >
       <View style={styles.createFormHeader}>
         <Text style={[styles.createFormTitle, { color: theme.text }]}>
-          Add Special Day Override
+          {Strings.addSpecialDayOverride}
         </Text>
         <TouchableOpacity
           style={[styles.closeFormButton, { backgroundColor: theme.surface }]}
@@ -638,9 +640,9 @@ const HomeScreen = () => {
           onPress={() => showPicker("date", "month", "override")}
         >
           <Input
-            label="Month"
+            label={Strings.month}
             value={getMonthName(newOverride.month)}
-            placeholder="Select month"
+            placeholder={Strings.selectMonth}
             editable={false}
             pointerEvents="none"
           />
@@ -649,9 +651,9 @@ const HomeScreen = () => {
         {/* Day Selection */}
         <TouchableOpacity onPress={() => showPicker("date", "day", "override")}>
           <Input
-            label="Day"
+            label={Strings.day}
             value={newOverride.day.toString()}
-            placeholder="Select day"
+            placeholder={Strings.selectDay}
             editable={false}
             pointerEvents="none"
           />
@@ -659,7 +661,9 @@ const HomeScreen = () => {
 
         {/* Status Toggle */}
         <View style={styles.formField}>
-          <Text style={[styles.formLabel, { color: theme.text }]}>Status</Text>
+          <Text style={[styles.formLabel, { color: theme.text }]}>
+            {Strings.status}
+          </Text>
           <View style={styles.toggleContainer}>
             <TouchableOpacity
               style={[
@@ -680,7 +684,7 @@ const HomeScreen = () => {
                   },
                 ]}
               >
-                Open
+                {Strings.open}
               </Text>
             </TouchableOpacity>
             <TouchableOpacity
@@ -702,7 +706,7 @@ const HomeScreen = () => {
                   },
                 ]}
               >
-                Closed
+                {Strings.closed}
               </Text>
             </TouchableOpacity>
           </View>
@@ -715,9 +719,9 @@ const HomeScreen = () => {
               onPress={() => showPicker("time", "start_time", "override")}
             >
               <Input
-                label="Start Time"
+                label={Strings.startTime}
                 value={newOverride.start_time}
-                placeholder="Select start time"
+                placeholder={Strings.selectStartTime}
                 editable={false}
                 pointerEvents="none"
               />
@@ -727,9 +731,9 @@ const HomeScreen = () => {
               onPress={() => showPicker("time", "end_time", "override")}
             >
               <Input
-                label="End Time"
+                label={Strings.endTime}
                 value={newOverride.end_time}
-                placeholder="Select end time"
+                placeholder={Strings.selectEndTime}
                 editable={false}
                 pointerEvents="none"
               />
@@ -751,7 +755,7 @@ const HomeScreen = () => {
             disabled={loading}
             style={{ flex: 1, backgroundColor: theme.warning }}
           >
-            {loading ? "Creating..." : "Create Override"}
+            {loading ? Strings.creating : Strings.createOverride}
           </Button>
         </View>
       </View>
@@ -775,15 +779,15 @@ const HomeScreen = () => {
           style={[styles.exitButton, { backgroundColor: theme.error }]}
           onPress={() =>
             showConfirmationAlert(
-              "Log Out",
-              "Are you sure you want to log out?",
+              Strings.logOut,
+              Strings.logOutConfirm,
               logout,
-              "Log Out"
+              Strings.logOut
             )
           }
         >
           <Text style={[styles.exitButtonText, { color: theme.card }]}>
-            Log Out
+            {Strings.logOut}
           </Text>
         </TouchableOpacity>
         {/* </View> */}
@@ -861,7 +865,17 @@ const HomeScreen = () => {
             ) : (
               <>
                 {/* Create Forms */}
-                {showCreateForm === "storeTime" && renderCreateStoreTimeForm()}
+                {showCreateForm === "storeTime" && (
+                  <CreateStoreTimeForm
+                    theme={theme}
+                    newStoreTime={newStoreTime}
+                    setNewStoreTime={setNewStoreTime}
+                    showPicker={showPicker}
+                    setShowStoreTimeModal={setShowStoreTimeModal}
+                    createNewStoreTime={createNewStoreTime}
+                    loading={loading}
+                  />
+                )}
                 {showCreateForm === "override" && renderCreateOverrideForm()}
 
                 {/* Regular Store Times */}
@@ -917,6 +931,28 @@ const HomeScreen = () => {
         getStoreStatus={getStoreStatus}
         isStoreClosed={isStoreClosed}
       />
+
+      {/* Store Time Form Modal */}
+      {showStoreTimeModal && (
+        <View style={styles.modalOverlay}>
+          <View
+            style={[styles.modalContent, { backgroundColor: theme.background }]}
+          >
+            {renderCreateStoreTimeForm()}
+          </View>
+        </View>
+      )}
+
+      {/* Store Override Form Modal */}
+      {showOverrideModal && (
+        <View style={styles.modalOverlay}>
+          <View
+            style={[styles.modalContent, { backgroundColor: theme.background }]}
+          >
+            {renderCreateOverrideForm()}
+          </View>
+        </View>
+      )}
 
       {/* Date/Time Picker */}
       {showDateTimePicker &&
@@ -980,28 +1016,6 @@ const HomeScreen = () => {
             </View>
           </View>
         ))}
-
-      {/* Store Time Form Modal */}
-      {showStoreTimeModal && (
-        <View style={styles.modalOverlay}>
-          <View
-            style={[styles.modalContent, { backgroundColor: theme.background }]}
-          >
-            {renderCreateStoreTimeForm()}
-          </View>
-        </View>
-      )}
-
-      {/* Store Override Form Modal */}
-      {showOverrideModal && (
-        <View style={styles.modalOverlay}>
-          <View
-            style={[styles.modalContent, { backgroundColor: theme.background }]}
-          >
-            {renderCreateOverrideForm()}
-          </View>
-        </View>
-      )}
 
       {/* Custom Alert */}
       <CustomAlert

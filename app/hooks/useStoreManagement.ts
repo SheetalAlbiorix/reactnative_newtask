@@ -179,7 +179,7 @@ export const useStoreManagement = () => {
     // Generate 15-minute intervals for all 24 hours in NYC time
     let slotId = 0;
     for (let hour = 0; hour < 24; hour++) {
-      for (let minute = 0; minute < 60; minute += 15) {
+      for (let minute = 0; minute < 60; minute += 10) {
         const timeString = `${hour.toString().padStart(2, "0")}:${minute
           .toString()
           .padStart(2, "0")}`;
@@ -331,10 +331,10 @@ export const useStoreManagement = () => {
       // Convert NYC time to local timezone
       const nycTimeZone = "America/New_York";
       const appointmentInLocal = fromZonedTime(appointmentDateNYC, nycTimeZone);
-
-      // Schedule notification 15 minutes before appointment
+      // const appointmentInLocal = appointmentDateNYC
+      // Schedule notification 1 minute before appointment
       const notificationTime = new Date(
-        appointmentInLocal.getTime() - 15 * 60 * 1000
+        appointmentInLocal.getTime() - 2 * 60 * 1000
       );
       const localTimeString = format(appointmentInLocal, "HH:mm");
 
